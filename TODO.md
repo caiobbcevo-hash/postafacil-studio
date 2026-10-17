@@ -17,31 +17,40 @@
 
 ### Empresas e isolamento
 
-- [ ] Permitir cadastrar e editar empresas no produto, salvando nome, segmento, produtos, serviços, público-alvo, tom de voz, cores e links.
-- [ ] Cada empresa deve possuir um identificador próprio e os dados devem ser persistidos no banco, não apenas em estado local ou `localStorage`.
-- [ ] Permitir visualizar e editar os dados depois de atualizar a página e sair e entrar novamente.
-- [ ] Garantir no servidor que os dados de uma empresa não apareçam para outra conta sem autorização, usando o usuário autenticado e a empresa correspondente em todas as queries e mutations.
+- [x] Permitir cadastrar e editar empresas no produto, salvando nome, segmento, produtos, serviços, público-alvo, tom de voz, cores, links e URL opcional de logo.
+- [x] Cada empresa possui um identificador próprio e os dados são persistidos no MySQL gerenciado, não apenas em estado local ou `localStorage`.
+- [x] Permitir visualizar e editar os dados depois de atualizar a página; as queries protegidas carregam novamente os registros persistidos quando o Studio é montado.
+- [x] Garantir no servidor que os dados de uma empresa não apareçam para outra conta sem autorização, usando o usuário autenticado e a empresa correspondente em todas as queries e mutations.
 
 ### Planejamentos de conteúdo
 
-- [ ] Permitir criar, editar, salvar e excluir planejamentos de conteúdo persistidos no servidor.
-- [ ] Salvar roteiros de Reels, legendas, datas planejadas e status.
-- [ ] Permitir reabrir um conteúdo salvo sem perder suas informações e relacioná-lo à empresa correspondente.
-- [ ] Cobrir no servidor validação de entrada, vínculo obrigatório com empresa e exclusão/edição somente pelo proprietário autorizado.
+- [x] Permitir criar, editar, salvar e excluir planejamentos de conteúdo persistidos no servidor.
+- [x] Salvar roteiros de Reels, legendas, datas planejadas, status, briefing, cenas, narração, trilha, formato e duração.
+- [x] Permitir reabrir um conteúdo salvo sem perder suas informações e relacioná-lo à empresa correspondente.
+- [x] Cobrir no servidor validação de entrada, vínculo obrigatório com empresa e exclusão/edição somente pelo proprietário autorizado.
 
 ### Infraestrutura e segurança
 
-- [ ] Verificar e usar o banco MySQL gerenciado configurado no ambiente; se indisponível, não declarar persistência concluída.
-- [ ] Adicionar tabelas, relações, índices, migrações Drizzle, queries de acesso e procedures tRPC necessárias.
-- [ ] Não expor senhas, tokens ou chaves secretas no frontend e não solicitar a senha do Instagram.
-- [ ] Manter o projeto PostaFácil Studio separado do Beauty Academy e preservar o repositório GitHub existente.
-- [ ] Não contratar serviços pagos, criar assinaturas, avançar para integrações externas ou publicar o projeto automaticamente nesta etapa.
+- [x] Verificar e usar o banco MySQL gerenciado configurado no ambiente; `pnpm db:migrate` terminou sem novas migrações pendentes.
+- [x] Adicionar tabelas, relações, índices, migrações Drizzle, queries de acesso e procedures tRPC necessárias.
+- [x] Não expor senhas, tokens ou chaves secretas no frontend e não solicitar a senha do Instagram.
+- [x] Manter o projeto PostaFácil Studio separado do Beauty Academy e preservar o repositório GitHub privado existente.
+- [x] Não contratar serviços pagos, criar assinaturas, avançar para integrações externas ou publicar o projeto automaticamente nesta etapa.
 
-### Testes de aceitação
+### Testes de aceitação e estado real
 
-- [ ] Cadastrar uma empresa de teste e criar/salvar um conteúdo para ela.
-- [ ] Atualizar a página e verificar que a empresa e o conteúdo continuam disponíveis.
-- [ ] Testar edição e exclusão.
-- [ ] Verificar que dados de empresas diferentes permanecem separados.
-- [ ] Executar diagnóstico, testes automatizados e compilação disponíveis no projeto.
-- [ ] Informar no relatório final os arquivos alterados, se o banco está funcionando, testes e resultados, dependências de configuração e erros impeditivos.
+- [x] Smoke test contra o banco real: criou duas contas temporárias, cadastrou duas empresas, criou conteúdo para uma delas, verificou leitura após nova consulta, edição, exclusão e separação entre proprietários; os dados temporários foram removidos ao final. Resultado: `PERSISTENCE_SMOKE_OK`.
+- [x] Endpoint do servidor: `/api/health` retornou `{"status":"ok"}`.
+- [x] Rota protegida sem sessão: `/api/trpc/companies.list` retornou `401`, sem expor dados.
+- [x] `pnpm check`: passou sem erros de TypeScript.
+- [x] `pnpm test`: passou com 2 arquivos e 6 testes aprovados.
+- [x] `pnpm build`: compilação do frontend e servidor concluída.
+- [x] Manifesto `client/public/manus-routes.json`: servido com HTTP 200 e JSON válido, sincronizado com as rotas do App.
+- [ ] Validação visual autenticada ponta a ponta: o Preview redirecionou para o login oficial Manus, mas o navegador sandbox abriu uma tela em branco antes de concluir a sessão. O CRUD do servidor e do banco foi validado diretamente; falta repetir o fluxo pela interface após uma sessão Manus funcional.
+
+## Observações atuais
+
+- A configuração WebDev está com `server: true`, `database: true`, porta `3000`, auto-publicação desligada e GitHub privado `caiobbcevo-hash/postafacil-studio`.
+- O build ainda exibe dois avisos não bloqueantes do starter: o script `/api/platform/config.js` sem `type="module"` e um chunk JavaScript acima de 500 kB.
+- Não há referências ao Beauty Academy no código do projeto; a única ocorrência é esta regra de separação no próprio TODO.
+- Próximo passo recomendado: repetir a validação visual autenticada, sem iniciar integrações externas nem publicação automática.
