@@ -15,10 +15,11 @@ import {
   updateContentForOwner,
 } from "./db";
 import { COOKIE_NAME } from "@shared/const";
+import { normalizeOptionalUrl } from "@shared/optionalUrl";
 
 const requiredText = (label: string, max: number) => z.string().trim().min(1, `${label} é obrigatório`).max(max, `${label} excede o limite`);
 
-const companyInput = z.object({
+export const companyInput = z.object({
   name: requiredText("Nome", 160),
   segment: requiredText("Segmento", 160),
   products: requiredText("Produtos", 10000),
@@ -27,7 +28,10 @@ const companyInput = z.object({
   voiceTone: requiredText("Tom de voz", 120),
   brandColors: requiredText("Cores", 1000),
   links: requiredText("Links", 4000),
-  logoUrl: z.string().trim().url("Logo deve ser uma URL válida").max(2048).nullable().optional(),
+  logoUrl: z.preprocess(
+    normalizeOptionalUrl,
+    z.string().trim().url("Logo deve ser uma URL válida").max(2048).nullable().optional()
+  ),
 });
 
 const contentInput = z.object({

@@ -48,6 +48,14 @@
 - [x] Manifesto `client/public/manus-routes.json`: servido com HTTP 200 e JSON válido, sincronizado com as rotas do App.
 - [ ] Validação visual autenticada ponta a ponta: o Preview redirecionou para o login oficial Manus, mas o navegador sandbox abriu uma tela em branco antes de concluir a sessão. O CRUD do servidor e do banco foi validado diretamente; falta repetir o fluxo pela interface após uma sessão Manus funcional.
 
+## Correção validada — logoUrl opcional
+
+- [x] O formulário normaliza `logoUrl` vazio ou composto apenas por espaços para `null` antes de enviar a empresa.
+- [x] O schema tRPC também normaliza entradas vazias no servidor, protegendo o cadastro contra clientes que ainda enviem `""` ou espaços.
+- [x] URLs preenchidas continuam sendo aparadas e validadas; valores inválidos continuam rejeitados com “Logo deve ser uma URL válida”.
+- [x] Testes adicionados em `server/routers.validation.test.ts` para logo omitido, vazio, com espaços, `null`, URL válida e URL inválida.
+- [x] O smoke test do MySQL continua passando com cadastro sem logo, isolamento por usuário, edição e exclusão.
+
 ## Observações atuais
 
 - A configuração WebDev está com `server: true`, `database: true`, porta `3000`, auto-publicação desligada e GitHub privado `caiobbcevo-hash/postafacil-studio`.
