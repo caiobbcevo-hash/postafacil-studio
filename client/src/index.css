@@ -577,3 +577,48 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .usage-header, .usage-row { grid-template-columns: 1.2fr .55fr .75fr; gap: 8px; padding-left: 12px; padding-right: 12px; }
   .usage-header span:last-child, .usage-row b { display: none; }
 }
+
+/* Persistência e estados de autenticação */
+.auth-gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px; background: radial-gradient(circle at 50% 15%, #f0edff 0, #f8f8fb 42%, #f8f8fb 100%); text-align: center; }
+.auth-gate-mark { width: 58px; height: 58px; display: grid; place-items: center; margin-bottom: 19px; border-radius: 18px; color: #fff; background: linear-gradient(145deg, #7e70e5, #5242bd); box-shadow: 0 10px 24px rgba(103,87,217,.22); }
+.auth-gate h1 { margin: 0; color: #292735; font-size: 28px; letter-spacing: -1px; }
+.auth-gate > p:not(.eyebrow) { max-width: 430px; color: #8b8897; line-height: 1.6; font-size: 12px; margin: 10px 0 20px; }
+.auth-gate small { color: #aaa7b4; font-size: 9px; margin-top: 14px; }
+.loading-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 13px; color: #777482; background: #f8f8fb; font-size: 11px; }
+.loading-screen .brand-mark { width: 43px; height: 43px; border-radius: 14px; }
+.data-error { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px; text-align: center; color: #c37a52; background: #fffaf6; }
+.data-error strong { color: #8a543a; margin-top: 10px; font-size: 16px; }
+.data-error p { max-width: 580px; color: #9e806f; font-size: 11px; line-height: 1.55; margin: 8px 0; }
+.data-error small { color: #b09d92; font-size: 9px; }
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.company-list { width: 100%; text-align: left; }
+.company-list-heading { display: flex; justify-content: space-between; align-items: center; color: #aaa7b4; text-transform: uppercase; letter-spacing: 1px; font-size: 8px; font-weight: 800; margin-bottom: 8px; }
+.company-list-heading b { color: #6a60c7; font-size: 9px; }
+.company-list-item { width: 100%; min-height: 34px; display: flex; align-items: center; gap: 7px; padding: 5px 6px; border: 0; border-radius: 7px; background: transparent; color: #858290; font-size: 9px; text-align: left; }
+.company-list-item:hover, .company-list-item.active { color: #5d51bf; background: #f3f1ff; }
+.company-list-item span:nth-child(2) { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.company-list-item svg { transform: rotate(-90deg); opacity: .55; }
+.company-list-avatar { width: 21px; height: 21px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 6px; color: #6757d9; background: #ebe8ff; font-size: 7px; font-weight: 800; }
+.company-empty { color: #aaa7b4; font-size: 9px; line-height: 1.4; margin: 7px 0 0; }
+.danger-text-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 17px; padding: 7px; border: 0; border-radius: 7px; color: #c47777; background: transparent; font-size: 9px; }
+.danger-text-button:hover { background: #fff2f2; }
+.danger-text-button:disabled { opacity: .5; }
+.colors-wide-input { width: 100%; height: 37px; border: 1px solid #e6e5ed; border-radius: 8px; padding: 10px 11px; color: #555260; background: #fdfdfe; font-size: 11px; outline: none; }
+.colors-wide-input:focus { border-color: #aaa0e9; box-shadow: 0 0 0 3px #f1efff; }
+.field-help { color: #aaa7b4; font-size: 9px; line-height: 1.45; margin: 7px 0 0; }
+.content-thumb { border: 0; padding: 0; cursor: pointer; }
+.content-row-main { min-width: 0; flex: 1; border: 0; padding: 0; background: transparent; text-align: left; cursor: pointer; }
+.table-content { min-width: 0; width: 100%; border: 0; padding: 0; background: transparent; text-align: left; cursor: pointer; }
+.large-editor { min-height: 190px !important; }
+.caption-field { margin-top: 17px; }
+.caption-field textarea { min-height: 86px !important; }
+.row-actions { display: flex; align-items: center; gap: 2px; justify-content: flex-end; }
+.danger-icon { color: #c77a7a; }
+@media (max-width: 800px) {
+  .header-actions { width: 100%; }
+  .header-actions button { flex: 1; }
+  .company-list { text-align: left; }
+  .profile-aside { align-items: start; }
+  .profile-aside .company-list, .profile-aside .danger-text-button { grid-column: 1 / -1; }
+  .row-actions { justify-content: flex-end; }
+}
