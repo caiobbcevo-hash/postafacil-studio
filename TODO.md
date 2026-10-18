@@ -94,3 +94,29 @@
 ## Próxima tarefa recomendada
 
 Abrir um Pull Request de `chore/multi-account-continuity` para `main` após revisão. Em seguida, repetir a validação visual autenticada no Preview com uma sessão Manus funcional. Só depois planejar a primeira integração real de IA, começando por um endpoint server-side com limites, confirmação explícita de custo e teste mockado; não iniciar integrações externas, não alterar infraestrutura e não executar migrações destrutivas nesta etapa.
+
+
+## Branch `feat/ai-content-generation`
+
+- [x] Criar branch própria a partir do estado importado, preservando a Demo pública e sem alterar a `main` do GitHub.
+- [x] Implementar `server/aiContent.ts` com validação do pedido, contexto da empresa, prompt seguro, parsing JSON e validação do resultado.
+- [x] Expor `ai.generateContent` como mutation tRPC protegida, usando `getCompanyForOwner` para isolamento por conta e empresa.
+- [x] Integrar o Criador com seleção de tipo, geração server-side, revisão/edição do resultado e salvamento explícito.
+- [x] Adicionar migração aditiva `drizzle/0003_absent_post.sql` para persistir `generationType`.
+- [x] Documentar requisitos de `MANUS_API_URL`, `MANUS_API_KEY`, custo potencial e teste seguro no README.
+- [x] Criar testes unitários de validação, prompt e parsing sem chamar o provedor real.
+- [x] Aplicar `pnpm db:migrate` no banco do novo projeto WebDev; a migração aditiva foi executada com sucesso nesta sessão.
+- [ ] Executar uma geração real autenticada com o serviço Manus, somente após confirmar que o ambiente possui credenciais e que o consumo de créditos está autorizado.
+- [ ] Publicar a branch `feat/ai-content-generation` no GitHub após a revisão final e confirmar o SHA remoto.
+
+## Validação da implementação de IA
+
+- `pnpm check`: passou.
+- `pnpm test`: passou com 4 arquivos e 13 testes; nenhum teste chamou o provedor real.
+- `pnpm build`: compilação do frontend e servidor concluída; permanecem os avisos não bloqueantes do starter sobre `type="module"` e chunk acima de 500 kB.
+- `pnpm drizzle-kit generate`: criou a migração aditiva da coluna `contents.generationType`; não aplicou DDL ao banco.
+- Não declarar geração real funcionando até executar um teste autenticado com o provedor configurado.
+
+## Próxima tarefa recomendada
+
+Revisar a diff da branch e realizar uma única geração real autenticada com um pedido controlado, verificar o resultado e o salvamento associado à empresa correta. Só então publicar a branch no GitHub; não fazer push direto na `main` e não habilitar publicação automática.

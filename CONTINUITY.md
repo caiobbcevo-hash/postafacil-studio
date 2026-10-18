@@ -111,3 +111,16 @@ Resolver os arquivos marcados, revisar `git diff`, executar `git diff --check`, 
 ## Próxima tarefa recomendada
 
 A branch `chore/multi-account-continuity` já está publicada e confirmada no SHA `fec74324dcb0577cf82e2ab95cbbb8b4386ff852`. A próxima etapa é abrir o Pull Request para `main` e repetir a validação visual autenticada no Preview com uma sessão Manus funcional. Só depois deve ser planejada a primeira integração real de IA, começando por um endpoint server-side com limites, confirmação explícita de custo e teste mockado. Não iniciar integrações externas, não alterar infraestrutura e não publicar o aplicativo automaticamente antes dessa revisão.
+
+
+## Nova branch: geração real de conteúdo com IA
+
+A branch atual é `feat/ai-content-generation`. Ela preserva a rota pública `/demo` e adiciona a geração real de conteúdo somente às rotas autenticadas do Studio. O fluxo está no `Criador`: o usuário seleciona uma empresa, escolhe `caption`, `reel`, `idea` ou `campaign`, informa o objetivo e solicita um rascunho. O resultado é exibido para revisão e edição; nada é salvo automaticamente.
+
+O backend está em `server/aiContent.ts` e na procedure protegida `ai.generateContent` de `server/routers.ts`. A empresa é carregada com `getCompanyForOwner(ctx.user.id, input.companyId)`, mantendo isolamento por usuário. O prompt delimita os dados da marca como contexto, pede JSON estrito e o resultado é validado com Zod antes de retornar ao cliente. A chamada usa `server/_core/llm.ts` com `MANUS_API_URL` e `MANUS_API_KEY` somente no servidor.
+
+A migração `drizzle/0003_absent_post.sql` adiciona `contents.generationType` com default `reel`. Ela foi gerada, revisada e aplicada com `pnpm db:migrate` no banco do novo projeto WebDev. Desenvolvimento e produção podem compartilhar o mesmo MySQL conforme a configuração; não repetir a migração cegamente em outro banco sem verificar o estado.
+
+Validações desta branch: `pnpm check` passou; `pnpm test` passou com 4 arquivos e 13 testes, sem chamadas externas; `pnpm build` passou com os dois avisos não bloqueantes já conhecidos. Ainda não há evidência de uma geração real com créditos: isso depende de `MANUS_API_URL`, `MANUS_API_KEY`, uma sessão autenticada e autorização para consumir créditos.
+
+A próxima etapa segura é revisar a diff, confirmar a aplicação da migração no banco autorizado, executar uma única geração real controlada e verificar o salvamento na empresa correta. Depois, publicar esta branch no GitHub e confirmar o SHA. Não fazer push direto na `main`, não versionar secrets e não habilitar publicação automática.

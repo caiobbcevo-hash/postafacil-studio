@@ -168,3 +168,22 @@ Resolva conflitos arquivo a arquivo, execute `git diff --check`, `pnpm check`, `
 ## Continuidade
 
 O arquivo [`CONTINUITY.md`](./CONTINUITY.md) contém o resumo técnico, o estado de sincronização, as restrições de segurança, o banco, as branches e a próxima tarefa recomendada para uma nova sessão do Manus.
+
+
+## Geração real de conteúdo com IA
+
+A branch `feat/ai-content-generation` adiciona a procedure protegida `ai.generateContent`. No Criador, o usuário seleciona a empresa, escolhe entre legenda para Instagram, roteiro para Reel, ideia de post ou campanha, informa o objetivo e recebe um rascunho editável de título, briefing, roteiro, cenas e legenda.
+
+A chamada usa o helper server-side `server/_core/llm.ts` e o serviço Manus em `MANUS_API_URL` com `MANUS_API_KEY`. Essas variáveis nunca são enviadas ao frontend, registradas no prompt ou versionadas. O servidor carrega a empresa com `getCompanyForOwner`, portanto uma conta não pode gerar conteúdo usando a empresa de outra conta.
+
+O resultado da IA é validado como JSON antes de chegar ao navegador. A tela mostra o resultado para revisão e somente a ação explícita de salvar persiste o conteúdo associado à empresa. A geração consome créditos do serviço Manus quando acionada; os testes automatizados não chamam o provedor real.
+
+Depois de revisar a migração `drizzle/0003_absent_post.sql`, aplique as migrações no banco-alvo autorizado:
+
+```bash
+pnpm db:migrate
+```
+
+Se `MANUS_API_URL` ou `MANUS_API_KEY` não estiverem disponíveis no ambiente server-side, a interface exibirá que a geração está indisponível; não invente credenciais e não coloque chaves em `.env` versionado.
+
+Para testar a interface sem login, use `/demo`. Essa rota contém somente dados fictícios, não chama IA, não grava no banco e não substitui a autenticação das rotas reais.

@@ -41,6 +41,7 @@ export const contents = mysqlTable("contents", {
   companyId: int("companyId").notNull().references(() => companies.id, { onDelete: "cascade" }),
   title: varchar("title", { length: 200 }).notNull(),
   contentType: mysqlEnum("contentType", ["reel", "carrossel", "story"]).default("reel").notNull(),
+  generationType: mysqlEnum("generationType", ["caption", "reel", "idea", "campaign"]).default("reel").notNull(),
   format: varchar("format", { length: 32 }).notNull(),
   duration: varchar("duration", { length: 32 }).notNull(),
   briefing: text("briefing").notNull(),

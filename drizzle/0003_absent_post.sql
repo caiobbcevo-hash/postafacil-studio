@@ -1,0 +1,1 @@
+ALTER TABLE `contents` ADD `generationType` enum('caption','reel','idea','campaign') DEFAULT 'reel' NOT NULL;

@@ -16,6 +16,8 @@ import {
 } from "./db";
 import { COOKIE_NAME } from "@shared/const";
 import { normalizeOptionalUrl } from "@shared/optionalUrl";
+import { TRPCError } from "@trpc/server";
+import { aiGenerationInput, generateContentForOwner } from "./aiContent";
 
 const requiredText = (label: string, max: number) => z.string().trim().min(1, `${label} é obrigatório`).max(max, `${label} excede o limite`);
 
@@ -38,6 +40,7 @@ const contentInput = z.object({
   companyId: z.number().int().positive(),
   title: requiredText("Título", 200),
   contentType: z.enum(["reel", "carrossel", "story"]),
+  generationType: z.enum(["caption", "reel", "idea", "campaign"]).default("reel"),
   format: requiredText("Formato", 32),
   duration: requiredText("Duração", 32),
   briefing: requiredText("Briefing", 20000),
@@ -52,6 +55,23 @@ const contentInput = z.object({
 
 export const appRouter = router({
   system: systemRouter,
+  ai: router({
+    generateContent: protectedProcedure.input(aiGenerationInput).mutation(async ({ ctx, input }) => {
+      try {
+        return await generateContentForOwner(ctx.user.id, input);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "unknown";
+        if (message.includes("MANUS_API_URL") || message.includes("MANUS_API_KEY")) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Geração de IA indisponível: configure o serviço Manus no ambiente do servidor." });
+        }
+        if (message.includes("Empresa não encontrada")) {
+          throw new TRPCError({ code: "NOT_FOUND", message });
+        }
+        console.error("[AI] Content generation failed", { message });
+        throw new TRPCError({ code: "BAD_GATEWAY", message: "O provedor de IA não retornou um conteúdo utilizável. Tente novamente." });
+      }
+    }),
+  }),
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

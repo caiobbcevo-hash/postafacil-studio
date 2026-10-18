@@ -81,6 +81,7 @@ type ContentStatus =
 
 type DbStatus = "draft" | "pending_approval" | "approved" | "scheduled" | "published" | "failed";
 type ContentType = "reel" | "carrossel" | "story";
+type GenerationType = "caption" | "reel" | "idea" | "campaign";
 
 type CompanyRecord = {
   id: number;
@@ -101,6 +102,7 @@ type ContentRecord = {
   companyName: string;
   title: string;
   contentType: ContentType;
+  generationType: GenerationType;
   format: string;
   duration: string;
   briefing: string;
@@ -133,6 +135,7 @@ type NavItem = {
 type CompanyForm = Omit<CompanyRecord, "id" | "logoUrl"> & { logoUrl: string };
 type ContentForm = {
   title: string;
+  generationType: GenerationType;
   format: string;
   duration: string;
   briefing: string;
@@ -187,6 +190,7 @@ const blankCompany: CompanyForm = {
 
 const blankContent: ContentForm = {
   title: "3 cuidados com a pele no verão",
+  generationType: "reel",
   format: "9:16 vertical",
   duration: "30 segundos",
   briefing: "Mostrar 3 cuidados simples para preparar a pele antes do verão, com linguagem acolhedora e uma dica prática no final.",
@@ -382,6 +386,7 @@ function Criador({ go, activeCompany }: { go: (route: string) => void; activeCom
   const utils = trpc.useUtils();
   const createMutation = trpc.contents.create.useMutation();
   const updateMutation = trpc.contents.update.useMutation();
+  const aiMutation = trpc.ai.generateContent.useMutation();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<ContentForm>(blankContent);
   const [hydratedId, setHydratedId] = useState<number>();
@@ -389,11 +394,26 @@ function Criador({ go, activeCompany }: { go: (route: string) => void; activeCom
   useEffect(() => {
     if (!existingQuery.data || hydratedId === existingQuery.data.id) return;
     const saved = existingQuery.data as ContentRecord;
-    setForm({ title: saved.title, format: saved.format, duration: saved.duration, briefing: saved.briefing, script: saved.script, scenes: saved.scenes, voice: saved.voice, track: saved.track, caption: saved.caption, plannedAt: dateTimeInput(saved.plannedAt) });
+    setForm({ title: saved.title, generationType: saved.generationType || "reel", format: saved.format, duration: saved.duration, briefing: saved.briefing, script: saved.script, scenes: saved.scenes, voice: saved.voice, track: saved.track, caption: saved.caption, plannedAt: dateTimeInput(saved.plannedAt) });
     setHydratedId(saved.id);
   }, [existingQuery.data, hydratedId]);
 
   const update = <K extends keyof ContentForm>(key: K, value: ContentForm[K]) => setForm(current => ({ ...current, [key]: value }));
+  const generate = async () => {
+    if (!activeCompany) {
+      toast.error("Selecione uma empresa antes de gerar conteúdo");
+      go("/empresa");
+      return;
+    }
+    try {
+      const generated = await aiMutation.mutateAsync({ companyId: activeCompany.id, generationType: form.generationType, objective: form.briefing, audience: activeCompany.targetAudience, tone: activeCompany.voiceTone });
+      setForm(current => ({ ...current, title: generated.title, briefing: generated.briefing, script: generated.script, scenes: generated.scenes, caption: generated.caption }));
+      setStep(1);
+      toast.success("Conteúdo gerado para revisão", { description: "Revise e edite antes de salvar no banco." });
+    } catch (error) {
+      toast.error("Não foi possível gerar o conteúdo", { description: error instanceof Error ? error.message : "Verifique a configuração do serviço de IA." });
+    }
+  };
   const save = async (returnToLibrary = false) => {
     if (!activeCompany) {
       toast.error("Cadastre ou selecione uma empresa antes de criar conteúdo");
@@ -401,7 +421,7 @@ function Criador({ go, activeCompany }: { go: (route: string) => void; activeCom
       return;
     }
     try {
-      const payload = { companyId: activeCompany.id, title: form.title, contentType: "reel" as const, format: form.format, duration: form.duration, briefing: form.briefing, script: form.script, scenes: form.scenes, voice: form.voice, track: form.track, caption: form.caption, plannedAt: form.plannedAt ? new Date(form.plannedAt) : null, status: "draft" as const };
+      const payload = { companyId: activeCompany.id, title: form.title, contentType: "reel" as const, generationType: form.generationType, format: form.format, duration: form.duration, briefing: form.briefing, script: form.script, scenes: form.scenes, voice: form.voice, track: form.track, caption: form.caption, plannedAt: form.plannedAt ? new Date(form.plannedAt) : null, status: "draft" as const };
       const saved = contentId ? await updateMutation.mutateAsync({ id: contentId, data: payload }) : await createMutation.mutateAsync(payload);
       await utils.contents.list.invalidate();
       await utils.contents.get.invalidate({ id: saved.id });
@@ -412,13 +432,13 @@ function Criador({ go, activeCompany }: { go: (route: string) => void; activeCom
       toast.error("Não foi possível salvar o planejamento", { description: error instanceof Error ? error.message : "Erro de servidor" });
     }
   };
-  const pending = createMutation.isPending || updateMutation.isPending;
-  return <><SectionIntro eyebrow="Estúdio de criação" title={contentId ? "Editar planejamento" : "Criar um Reel"} description="Monte o conteúdo por etapas e salve o planejamento no banco. Nenhuma geração externa ou publicação é executada." action={<div className="draft-save"><span><i /> {contentId ? "Registro persistido" : "Novo planejamento"}</span><button disabled={pending} onClick={() => save()}>{pending ? "Salvando…" : "Salvar no banco"}</button></div>} /><div className="creator-layout"><section className="panel creator-main"><div className="stepper">{creatorSteps.map((label, index) => <button key={label} className={`step ${index === step ? "active" : ""} ${index < step ? "done" : ""}`} onClick={() => setStep(index)}><span>{index < step ? <Check size={14} /> : index + 1}</span><label>{label}</label></button>)}</div>{step === 0 && <CreatorBrief form={form} update={update} />}{step === 1 && <CreatorScript script={form.script} setScript={value => update("script", value)} />}{step === 2 && <CreatorScenes scenes={form.scenes} setScenes={value => update("scenes", value)} />}{step === 3 && <CreatorAudio form={form} update={update} />}{step === 4 && <CreatorReview form={form} activeCompany={activeCompany} go={go} />}
+  const pending = createMutation.isPending || updateMutation.isPending || aiMutation.isPending;
+  return <><SectionIntro eyebrow="Estúdio de criação" title={contentId ? "Editar planejamento" : "Criar conteúdo"} description="Gere um rascunho com IA, revise cada etapa e salve somente quando estiver satisfeito." action={<div className="draft-save"><span><i /> {contentId ? "Registro persistido" : "Novo planejamento"}</span><button disabled={pending} onClick={() => save()}>{pending ? "Salvando…" : "Salvar no banco"}</button></div>} /><div className="creator-layout"><section className="panel creator-main"><div className="stepper">{creatorSteps.map((label, index) => <button key={label} className={`step ${index === step ? "active" : ""} ${index < step ? "done" : ""}`} onClick={() => setStep(index)}><span>{index < step ? <Check size={14} /> : index + 1}</span><label>{label}</label></button>)}</div>{step === 0 && <CreatorBrief form={form} update={update} onGenerate={generate} generating={aiMutation.isPending} />}{step === 1 && <CreatorScript script={form.script} setScript={value => update("script", value)} />}{step === 2 && <CreatorScenes scenes={form.scenes} setScenes={value => update("scenes", value)} />}{step === 3 && <CreatorAudio form={form} update={update} />}{step === 4 && <CreatorReview form={form} activeCompany={activeCompany} go={go} />}
 <div className="creator-footer"><button className="back-button" disabled={step === 0} onClick={() => setStep(current => Math.max(current - 1, 0))}><ArrowLeft size={16} /> Voltar</button>{step < creatorSteps.length - 1 ? <Button className="primary-action" onClick={() => setStep(current => Math.min(current + 1, creatorSteps.length - 1))}>Continuar <ArrowRight size={16} /></Button> : <Button className="primary-action" disabled={pending} onClick={() => save(true)}><Save size={16} /> {pending ? "Salvando…" : "Salvar e abrir biblioteca"}</Button>}</div></section><aside className="panel creator-preview"><div className="panel-heading"><div><span className="eyebrow">Prévia do formato</span><h2>Reel vertical</h2></div><span className="preview-tag">{form.format}</span></div><div className="phone-preview"><div className="phone-top"><span>9:16</span><span><MoreHorizontal size={15} /></span></div><div className="phone-art"><div className="phone-art-glow" /><span className="preview-placeholder"><Sparkles size={23} /><b>Prévia visual</b><small>As cenas aparecerão aqui</small></span></div><div className="phone-copy"><span>{activeCompany ? `@${activeCompany.name.toLowerCase().replace(/\s+/g, ".")}` : "@suaempresa"}</span><strong>{form.caption.slice(0, 65)}{form.caption.length > 65 ? "…" : ""}</strong><div className="phone-actions"><Heart size={15} /> <MessageSquareText size={15} /> <Send size={15} /></div></div></div><div className="preview-footnote"><Eye size={14} /> Prévia ilustrativa. Nenhum vídeo foi gerado.</div></aside></div></>;
 }
 
-function CreatorBrief({ form, update }: { form: ContentForm; update: <K extends keyof ContentForm>(key: K, value: ContentForm[K]) => void }) {
-  return <div className="creator-form"><div className="form-section-title"><div className="step-badge"><MessageSquareText size={17} /></div><div><h2>Comece com um briefing</h2><p>O título, briefing e data serão salvos no planejamento.</p></div></div><label>Título do conteúdo<input value={form.title} onChange={e => update("title", e.target.value)} placeholder="Ex.: 3 cuidados com a pele no verão" /></label><label>O que você quer comunicar?<textarea value={form.briefing} onChange={e => update("briefing", e.target.value)} /></label><div className="form-grid"><label>Duração<select value={form.duration} onChange={e => update("duration", e.target.value)}><option>15 segundos</option><option>30 segundos</option><option>45 segundos</option><option>60 segundos</option></select></label><label>Formato<select value={form.format} onChange={e => update("format", e.target.value)}><option>9:16 vertical</option><option>1:1 quadrado</option><option>16:9 horizontal</option></select></label><label className="field-span-2">Data planejada<input type="datetime-local" value={form.plannedAt} onChange={e => update("plannedAt", e.target.value)} /></label></div><div className="suggestion-box"><Sparkles size={17} /><div><strong>Salvamento real</strong><p>Este conteúdo será vinculado à empresa ativa e poderá ser reaberto pela biblioteca depois.</p></div><button onClick={() => update("briefing", `${form.briefing} Inclua uma abertura forte nos 2 primeiros segundos.`)}><Copy size={15} /></button></div></div>;
+function CreatorBrief({ form, update, onGenerate, generating }: { form: ContentForm; update: <K extends keyof ContentForm>(key: K, value: ContentForm[K]) => void; onGenerate: () => void; generating: boolean }) {
+  return <div className="creator-form"><div className="form-section-title"><div className="step-badge"><MessageSquareText size={17} /></div><div><h2>Defina o pedido</h2><p>A IA usará o contexto da empresa, o objetivo e o tipo escolhido para criar um rascunho editável.</p></div></div><label>Tipo de conteúdo<select value={form.generationType} onChange={e => update("generationType", e.target.value as GenerationType)}><option value="caption">Legenda para Instagram</option><option value="reel">Roteiro para Reel</option><option value="idea">Ideia de post</option><option value="campaign">Campanha de conteúdo</option></select></label><label>Título de referência<input value={form.title} onChange={e => update("title", e.target.value)} placeholder="Ex.: 3 cuidados com a pele no verão" /></label><label>Objetivo da publicação<textarea value={form.briefing} onChange={e => update("briefing", e.target.value)} placeholder="O que você quer comunicar e qual ação espera do público?" /></label><div className="form-grid"><label>Duração<select value={form.duration} onChange={e => update("duration", e.target.value)}><option>15 segundos</option><option>30 segundos</option><option>45 segundos</option><option>60 segundos</option></select></label><label>Formato<select value={form.format} onChange={e => update("format", e.target.value)}><option>9:16 vertical</option><option>1:1 quadrado</option><option>16:9 horizontal</option></select></label><label className="field-span-2">Data planejada<input type="datetime-local" value={form.plannedAt} onChange={e => update("plannedAt", e.target.value)} /></label></div><div className="suggestion-box"><Sparkles size={17} /><div><strong>Geração server-side</strong><p>A chamada usa a integração Manus protegida. O resultado aparece para revisão e não é salvo automaticamente.</p></div><Button className="primary-action" disabled={generating || !form.briefing.trim()} onClick={onGenerate}>{generating ? "Gerando…" : "Gerar com IA"}</Button></div></div>;
 }
 
 function CreatorScript({ script, setScript }: { script: string; setScript: (value: string) => void }) {

@@ -91,6 +91,7 @@ export type ContentInput = {
   companyId: number;
   title: string;
   contentType: "reel" | "carrossel" | "story";
+  generationType?: "caption" | "reel" | "idea" | "campaign";
   format: string;
   duration: string;
   briefing: string;
