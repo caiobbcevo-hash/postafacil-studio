@@ -187,3 +187,10 @@ pnpm db:migrate
 Se `MANUS_API_URL` ou `MANUS_API_KEY` não estiverem disponíveis no ambiente server-side, a interface exibirá que a geração está indisponível; não invente credenciais e não coloque chaves em `.env` versionado.
 
 Para testar a interface sem login, use `/demo`. Essa rota contém somente dados fictícios, não chama IA, não grava no banco e não substitui a autenticação das rotas reais.
+
+
+## Testes de confiabilidade e isolamento
+
+A suíte atual usa Vitest e inclui contratos server-side em `server/routers.ownership.test.ts`. Eles verificam que as procedures protegidas exigem autenticação, recebem o `ownerId` da sessão, preservam o `companyId` ao criar ou editar rascunhos e não substituem a identidade de outro usuário em leituras de conteúdo. Esses testes usam mocks e não escrevem no MySQL compartilhado nem chamam o provedor de IA.
+
+O projeto ainda não possui Playwright, Cypress ou outro executor E2E autenticado. Um E2E real deve ser adicionado somente com ambiente de teste isolado e sessão de teste segura; não use credenciais reais nem dados de produção para automatizar esse fluxo.
