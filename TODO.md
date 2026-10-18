@@ -72,7 +72,7 @@
 - [x] Criar branch de trabalho identificável `chore/multi-account-continuity` a partir do `main`, sem implementar diretamente na branch `main`.
 - [x] Documentar no README a importação em outra conta Manus, instalação, variáveis de ambiente, execução, testes, banco, migrações e sincronização Git segura.
 - [x] Criar `CONTINUITY.md` com resumo técnico independente do histórico da conversa.
-- [x] Publicar a branch de continuidade no GitHub e confirmar o SHA remoto: `4cf63279bc095ccf4e90f4967f09adb2b93ad1c1`.
+- [x] Publicar a branch de continuidade no GitHub e confirmar o SHA remoto final: `fec74324dcb0577cf82e2ab95cbbb8b4386ff852`.
 - [ ] Abrir Pull Request para `main` somente após revisão da diff e confirmação dos testes.
 - [ ] Repetir a validação visual autenticada ponta a ponta no Preview com uma sessão Manus funcional.
 
@@ -89,7 +89,8 @@
 - `pnpm build`: compilação do frontend e servidor concluída; permanecem os dois avisos não bloqueantes já registrados acima.
 - `git diff --check`: passou.
 - A branch publicada foi confirmada no GitHub via `git ls-remote` e API do GitHub.
+- O checkout local e a branch remota `chore/multi-account-continuity` estão sincronizados em `fec74324dcb0577cf82e2ab95cbbb8b4386ff852`.
 
 ## Próxima tarefa recomendada
 
-Revisar a diff final, criar um commit somente de documentação e publicar a branch `chore/multi-account-continuity`. Depois, outra conta do Manus deve importar a branch, confirmar acesso ao repositório privado, configurar secrets sem versioná-los e continuar o trabalho a partir de um Pull Request. Não iniciar integrações externas, não alterar infraestrutura e não executar migrações destrutivas nesta etapa.
+Abrir um Pull Request de `chore/multi-account-continuity` para `main` após revisão. Em seguida, repetir a validação visual autenticada no Preview com uma sessão Manus funcional. Só depois planejar a primeira integração real de IA, começando por um endpoint server-side com limites, confirmação explícita de custo e teste mockado; não iniciar integrações externas, não alterar infraestrutura e não executar migrações destrutivas nesta etapa.

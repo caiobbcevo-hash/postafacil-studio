@@ -110,4 +110,4 @@ Resolver os arquivos marcados, revisar `git diff`, executar `git diff --check`, 
 
 ## Próxima tarefa recomendada
 
-Executar os checks locais, revisar a diff somente de documentação, commitar e publicar `chore/multi-account-continuity`. Em seguida, repetir a validação visual autenticada no Preview com uma sessão Manus funcional. Não iniciar integrações externas, não alterar infraestrutura e não publicar o aplicativo automaticamente.
+A branch `chore/multi-account-continuity` já está publicada e confirmada no SHA `fec74324dcb0577cf82e2ab95cbbb8b4386ff852`. A próxima etapa é abrir o Pull Request para `main` e repetir a validação visual autenticada no Preview com uma sessão Manus funcional. Só depois deve ser planejada a primeira integração real de IA, começando por um endpoint server-side com limites, confirmação explícita de custo e teste mockado. Não iniciar integrações externas, não alterar infraestrutura e não publicar o aplicativo automaticamente antes dessa revisão.
