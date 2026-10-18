@@ -61,7 +61,7 @@
 - A configuração WebDev está com `server: true`, `database: true`, porta `3000`, auto-publicação desligada e GitHub privado `caiobbcevo-hash/postafacil-studio`.
 - O build ainda exibe dois avisos não bloqueantes do starter: o script `/api/platform/config.js` sem `type="module"` e um chunk JavaScript acima de 500 kB.
 - Não há referências ao Beauty Academy no código do projeto; a única ocorrência é esta regra de separação no próprio TODO.
-- Próximo passo recomendado nesta etapa histórica: repetir a validação visual autenticada; a integração server-side de texto foi implementada posteriormente na branch `feat/ai-content-generation`.
+- Próximo passo recomendado nesta etapa histórica: repetir a validação visual autenticada; a integração server-side de texto foi implementada posteriormente e integrada à `main` pelo PR #1.
 
 ## Preparação para desenvolvimento em múltiplas contas Manus
 
@@ -73,7 +73,7 @@
 - [x] Documentar no README a importação em outra conta Manus, instalação, variáveis de ambiente, execução, testes, banco, migrações e sincronização Git segura.
 - [x] Criar `CONTINUITY.md` com resumo técnico independente do histórico da conversa.
 - [x] Publicar a branch de continuidade no GitHub e confirmar o SHA remoto final: `fec74324dcb0577cf82e2ab95cbbb8b4386ff852`.
-- [x] Abrir Pull Request para `main` após revisão da diff e confirmação dos testes: https://github.com/caiobbcevo-hash/postafacil-studio/pull/1.
+- [x] Abrir e integrar o Pull Request para `main` após revisão da diff e confirmação dos testes: https://github.com/caiobbcevo-hash/postafacil-studio/pull/1; merge commit `3bc84cee93953388108c2567ee7f3cf075b4f8aa`.
 - [ ] Repetir a validação visual autenticada ponta a ponta no Preview com uma sessão Manus funcional.
 
 ## Validação desta sessão
@@ -93,7 +93,7 @@
 
 ## Próxima tarefa recomendada
 
-Abrir um Pull Request de `chore/multi-account-continuity` para `main` após revisão. Em seguida, repetir a validação visual autenticada no Preview com uma sessão Manus funcional. Só depois planejar a primeira integração real de IA, começando por um endpoint server-side com limites, confirmação explícita de custo e teste mockado; não iniciar integrações externas, não alterar infraestrutura e não executar migrações destrutivas nesta etapa.
+O PR #1 já foi integrado. A próxima tarefa é repetir a validação visual autenticada no Preview com uma sessão Manus funcional, cobrindo seleção de empresa, geração, edição, salvamento e reabertura do rascunho `150001`. Não iniciar integrações de vídeo, imagem ou redes sociais nesta etapa.
 
 
 ## Branch `feat/ai-content-generation`
@@ -119,4 +119,4 @@ Abrir um Pull Request de `chore/multi-account-continuity` para `main` após revi
 
 ## Próxima tarefa recomendada
 
-Aguardar a revisão do Pull Request #1 e autorização explícita para merge. Não fazer merge automaticamente, não fazer push direto na `main` e não habilitar publicação automática.
+O PR #1 foi integrado em `3bc84cee93953388108c2567ee7f3cf075b4f8aa`. Aguardar a validação visual autenticada antes de iniciar outra funcionalidade; não repetir migrações sem verificar o banco e não habilitar publicação automática.

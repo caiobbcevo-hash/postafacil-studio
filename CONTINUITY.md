@@ -110,7 +110,7 @@ Resolver os arquivos marcados, revisar `git diff`, executar `git diff --check`, 
 
 ## Próxima tarefa recomendada
 
-A branch `chore/multi-account-continuity` permanece publicada no SHA `fec74324dcb0577cf82e2ab95cbbb8b4386ff852`. A implementação posterior de IA está publicada em `feat/ai-content-generation`, SHA `21b9c75d45d255b186b4d2f1673b99e19b17c43e`. A próxima etapa é executar uma única geração real autenticada e controlada, se o ambiente tiver credenciais e houver autorização para consumir créditos; depois, abrir o Pull Request para `main`. Não fazer push direto na `main`, não versionar secrets e não habilitar publicação automática.
+A branch `chore/multi-account-continuity` permanece publicada no SHA `fec74324dcb0577cf82e2ab95cbbb8b4386ff852`. A implementação de IA foi integrada à `main` pelo PR #1, cujo merge commit é `3bc84cee93953388108c2567ee7f3cf075b4f8aa`. A próxima etapa é executar a validação visual autenticada ponta a ponta; não fazer push direto na `main`, não versionar secrets e não habilitar publicação automática.
 
 
 ## Nova branch: geração real de conteúdo com IA
@@ -123,4 +123,4 @@ A migração `drizzle/0003_absent_post.sql` adiciona `contents.generationType` c
 
 Validações desta branch: `pnpm check` passou; `pnpm test` passou com 4 arquivos e 13 testes, sem chamadas externas; `pnpm build` passou com os dois avisos não bloqueantes já conhecidos. Ainda não há evidência de uma geração real com créditos: isso depende de `MANUS_API_URL`, `MANUS_API_KEY`, uma sessão autenticada e autorização para consumir créditos.
 
-A geração real controlada já foi executada com sucesso; o rascunho `150001` foi salvo e recuperado na empresa `1`. O Pull Request #1 foi aberto para `main`: https://github.com/caiobbcevo-hash/postafacil-studio/pull/1. Aguardar revisão e autorização explícita antes de qualquer merge. Não fazer push direto na `main`, não versionar secrets e não habilitar publicação automática.
+A geração real controlada já foi executada com sucesso; o rascunho `150001` foi salvo e recuperado na empresa `1`. O Pull Request #1 foi integrado em `main`: https://github.com/caiobbcevo-hash/postafacil-studio/pull/1. A próxima etapa é validar a interface autenticada usando esse rascunho, sem repetir a geração ou consumir novos créditos sem autorização. Não fazer push direto na `main`, não versionar secrets e não habilitar publicação automática.

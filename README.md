@@ -19,7 +19,7 @@ Este repositório é exclusivamente do PostaFácil Studio e deve permanecer sepa
 
 A versão de referência desta preparação parte do commit `f921bb2` da branch `main`. Novas funcionalidades devem ser implementadas em branches próprias; não altere `main` diretamente.
 
-As integrações externas de vídeo, voz, música e Meta/Instagram ainda são pontos preparados na interface. A geração de texto por IA agora usa o serviço Manus server-side na branch `feat/ai-content-generation`; nenhuma credencial deve ser solicitada no frontend, publicada no Git ou colocada em arquivos versionados.
+As integrações externas de vídeo, voz, música e Meta/Instagram ainda são pontos preparados na interface. A geração de texto por IA agora usa o serviço Manus server-side e já está integrada à `main`; nenhuma credencial deve ser solicitada no frontend, publicada no Git ou colocada em arquivos versionados.
 
 ## Importar em outra conta do Manus
 
@@ -172,13 +172,13 @@ O arquivo [`CONTINUITY.md`](./CONTINUITY.md) contém o resumo técnico, o estado
 
 ## Geração real de conteúdo com IA
 
-A branch `feat/ai-content-generation` adiciona a procedure protegida `ai.generateContent`. No Criador, o usuário seleciona a empresa, escolhe entre legenda para Instagram, roteiro para Reel, ideia de post ou campanha, informa o objetivo e recebe um rascunho editável de título, briefing, roteiro, cenas e legenda.
+A `main` contém a procedure protegida `ai.generateContent`. No Criador, o usuário seleciona a empresa, escolhe entre legenda para Instagram, roteiro para Reel, ideia de post ou campanha, informa o objetivo e recebe um rascunho editável de título, briefing, roteiro, cenas e legenda.
 
 A chamada usa o helper server-side `server/_core/llm.ts` e o serviço Manus em `MANUS_API_URL` com `MANUS_API_KEY`. Essas variáveis nunca são enviadas ao frontend, registradas no prompt ou versionadas. O servidor carrega a empresa com `getCompanyForOwner`, portanto uma conta não pode gerar conteúdo usando a empresa de outra conta.
 
 O resultado da IA é validado como JSON antes de chegar ao navegador. A tela mostra o resultado para revisão e somente a ação explícita de salvar persiste o conteúdo associado à empresa. A geração consome créditos do serviço Manus quando acionada; os testes automatizados não chamam o provedor real.
 
-Depois de revisar a migração `drizzle/0003_absent_post.sql`, aplique as migrações no banco-alvo autorizado:
+Depois de revisar a migração `drizzle/0003_absent_post.sql`, aplique as migrações somente no banco-alvo autorizado. Ela já foi aplicada no banco do ambiente WebDev usado para o teste controlado; em outra conta ou banco, verifique o journal antes de executar:
 
 ```bash
 pnpm db:migrate
