@@ -72,7 +72,7 @@
 - [x] Criar branch de trabalho identificável `chore/multi-account-continuity` a partir do `main`, sem implementar diretamente na branch `main`.
 - [x] Documentar no README a importação em outra conta Manus, instalação, variáveis de ambiente, execução, testes, banco, migrações e sincronização Git segura.
 - [x] Criar `CONTINUITY.md` com resumo técnico independente do histórico da conversa.
-- [ ] Publicar a branch de continuidade no GitHub e confirmar o SHA remoto.
+- [x] Publicar a branch de continuidade no GitHub e confirmar o SHA remoto: `4cf63279bc095ccf4e90f4967f09adb2b93ad1c1`.
 - [ ] Abrir Pull Request para `main` somente após revisão da diff e confirmação dos testes.
 - [ ] Repetir a validação visual autenticada ponta a ponta no Preview com uma sessão Manus funcional.
 
@@ -88,6 +88,7 @@
 - `pnpm test`: passou com 3 arquivos e 9 testes aprovados; houve apenas os avisos esperados de OAuth sem configuração em testes unitários.
 - `pnpm build`: compilação do frontend e servidor concluída; permanecem os dois avisos não bloqueantes já registrados acima.
 - `git diff --check`: passou.
+- A branch publicada foi confirmada no GitHub via `git ls-remote` e API do GitHub.
 
 ## Próxima tarefa recomendada
 
