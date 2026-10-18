@@ -62,3 +62,33 @@
 - O build ainda exibe dois avisos não bloqueantes do starter: o script `/api/platform/config.js` sem `type="module"` e um chunk JavaScript acima de 500 kB.
 - Não há referências ao Beauty Academy no código do projeto; a única ocorrência é esta regra de separação no próprio TODO.
 - Próximo passo recomendado: repetir a validação visual autenticada, sem iniciar integrações externas nem publicação automática.
+
+## Preparação para desenvolvimento em múltiplas contas Manus
+
+- [x] Analisar os ZIPs recebidos antes de qualquer alteração destrutiva; `code(4).zip` foi tratado como a fonte mais recente e comparado com `Masterpost.zip`.
+- [x] Confirmar o repositório oficial privado `caiobbcevo-hash/postafacil-studio`, a branch padrão `main` e o acesso administrativo da conta GitHub autorizada.
+- [x] Confirmar que o código rastreado do ZIP mais recente corresponde byte a byte ao `main` no commit `f921bb2`; o único arquivo adicional é o backup ignorado `vite.config.ts.bak`, preservado fora do histórico.
+- [x] Confirmar que não há `.git`, `.env`, credenciais ou chaves nos ZIPs; a exportação é código-fonte, não um backup dos dados do MySQL.
+- [x] Criar branch de trabalho identificável `chore/multi-account-continuity` a partir do `main`, sem implementar diretamente na branch `main`.
+- [x] Documentar no README a importação em outra conta Manus, instalação, variáveis de ambiente, execução, testes, banco, migrações e sincronização Git segura.
+- [x] Criar `CONTINUITY.md` com resumo técnico independente do histórico da conversa.
+- [ ] Publicar a branch de continuidade no GitHub e confirmar o SHA remoto.
+- [ ] Abrir Pull Request para `main` somente após revisão da diff e confirmação dos testes.
+- [ ] Repetir a validação visual autenticada ponta a ponta no Preview com uma sessão Manus funcional.
+
+## Validação desta sessão
+
+- Auditoria remota executada: `gh auth status`, metadados do repositório, branches, commits recentes, `git ls-remote` e clone somente para comparação.
+- Repositório confirmado como privado: `https://github.com/caiobbcevo-hash/postafacil-studio`.
+- Estado remoto confirmado: apenas `main`, sem proteção de branch, HEAD `f921bb2ed91ed9a6fcd6b842014e071a770d8713`.
+- Comparação `code(4).zip` versus `Masterpost.zip`: 140 arquivos em ambos, sem diferenças de conteúdo.
+- Comparação `code(4).zip` versus GitHub: sem diferenças de conteúdo nos arquivos; `vite.config.ts.bak` é um arquivo ignorado e não rastreado no GitHub.
+- `pnpm install --frozen-lockfile`: concluído com pnpm 10.18.0, sem alterar o lockfile.
+- `pnpm check`: passou sem erros de TypeScript.
+- `pnpm test`: passou com 3 arquivos e 9 testes aprovados; houve apenas os avisos esperados de OAuth sem configuração em testes unitários.
+- `pnpm build`: compilação do frontend e servidor concluída; permanecem os dois avisos não bloqueantes já registrados acima.
+- `git diff --check`: passou.
+
+## Próxima tarefa recomendada
+
+Revisar a diff final, criar um commit somente de documentação e publicar a branch `chore/multi-account-continuity`. Depois, outra conta do Manus deve importar a branch, confirmar acesso ao repositório privado, configurar secrets sem versioná-los e continuar o trabalho a partir de um Pull Request. Não iniciar integrações externas, não alterar infraestrutura e não executar migrações destrutivas nesta etapa.
