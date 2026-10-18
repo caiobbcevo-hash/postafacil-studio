@@ -73,7 +73,7 @@
 - [x] Documentar no README a importação em outra conta Manus, instalação, variáveis de ambiente, execução, testes, banco, migrações e sincronização Git segura.
 - [x] Criar `CONTINUITY.md` com resumo técnico independente do histórico da conversa.
 - [x] Publicar a branch de continuidade no GitHub e confirmar o SHA remoto final: `fec74324dcb0577cf82e2ab95cbbb8b4386ff852`.
-- [ ] Abrir Pull Request para `main` somente após revisão da diff e confirmação dos testes.
+- [x] Abrir Pull Request para `main` após revisão da diff e confirmação dos testes: https://github.com/caiobbcevo-hash/postafacil-studio/pull/1.
 - [ ] Repetir a validação visual autenticada ponta a ponta no Preview com uma sessão Manus funcional.
 
 ## Validação desta sessão
@@ -106,7 +106,7 @@ Abrir um Pull Request de `chore/multi-account-continuity` para `main` após revi
 - [x] Documentar requisitos de `MANUS_API_URL`, `MANUS_API_KEY`, custo potencial e teste seguro no README.
 - [x] Criar testes unitários de validação, prompt e parsing sem chamar o provedor real.
 - [x] Aplicar `pnpm db:migrate` no banco do novo projeto WebDev; a migração aditiva foi executada com sucesso nesta sessão.
-- [ ] Executar uma geração real autenticada com o serviço Manus, somente após confirmar que o ambiente possui credenciais e que o consumo de créditos está autorizado.
+- [x] Executar uma geração real autenticada com o serviço Manus após confirmação de credenciais e autorização de consumo; o rascunho `150001` foi salvo e recuperado como `draft`.
 - [x] Publicar a branch `feat/ai-content-generation` no GitHub e confirmar o SHA remoto: `21b9c75d45d255b186b4d2f1673b99e19b17c43e`.
 
 ## Validação da implementação de IA
@@ -119,4 +119,4 @@ Abrir um Pull Request de `chore/multi-account-continuity` para `main` após revi
 
 ## Próxima tarefa recomendada
 
-Realizar uma única geração real autenticada com um pedido controlado, verificar o resultado e o salvamento associado à empresa correta e, em seguida, abrir um Pull Request da branch publicada. Não fazer push direto na `main` e não habilitar publicação automática.
+Aguardar a revisão do Pull Request #1 e autorização explícita para merge. Não fazer merge automaticamente, não fazer push direto na `main` e não habilitar publicação automática.

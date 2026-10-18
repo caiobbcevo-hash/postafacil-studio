@@ -123,4 +123,4 @@ A migração `drizzle/0003_absent_post.sql` adiciona `contents.generationType` c
 
 Validações desta branch: `pnpm check` passou; `pnpm test` passou com 4 arquivos e 13 testes, sem chamadas externas; `pnpm build` passou com os dois avisos não bloqueantes já conhecidos. Ainda não há evidência de uma geração real com créditos: isso depende de `MANUS_API_URL`, `MANUS_API_KEY`, uma sessão autenticada e autorização para consumir créditos.
 
-A próxima etapa segura é executar uma única geração real controlada e verificar o salvamento na empresa correta. A branch já está publicada e confirmada no GitHub; depois do teste, abrir o Pull Request. Não fazer push direto na `main`, não versionar secrets e não habilitar publicação automática.
+A geração real controlada já foi executada com sucesso; o rascunho `150001` foi salvo e recuperado na empresa `1`. O Pull Request #1 foi aberto para `main`: https://github.com/caiobbcevo-hash/postafacil-studio/pull/1. Aguardar revisão e autorização explícita antes de qualquer merge. Não fazer push direto na `main`, não versionar secrets e não habilitar publicação automática.
