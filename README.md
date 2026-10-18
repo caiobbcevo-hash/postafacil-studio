@@ -19,7 +19,7 @@ Este repositório é exclusivamente do PostaFácil Studio e deve permanecer sepa
 
 A versão de referência desta preparação parte do commit `f921bb2` da branch `main`. Novas funcionalidades devem ser implementadas em branches próprias; não altere `main` diretamente.
 
-As integrações externas de texto, vídeo, voz, música e Meta/Instagram ainda são pontos preparados na interface. Nenhuma credencial deve ser solicitada no frontend, publicada no Git ou colocada em arquivos versionados.
+As integrações externas de vídeo, voz, música e Meta/Instagram ainda são pontos preparados na interface. A geração de texto por IA agora usa o serviço Manus server-side na branch `feat/ai-content-generation`; nenhuma credencial deve ser solicitada no frontend, publicada no Git ou colocada em arquivos versionados.
 
 ## Importar em outra conta do Manus
 

@@ -61,7 +61,7 @@
 - A configuração WebDev está com `server: true`, `database: true`, porta `3000`, auto-publicação desligada e GitHub privado `caiobbcevo-hash/postafacil-studio`.
 - O build ainda exibe dois avisos não bloqueantes do starter: o script `/api/platform/config.js` sem `type="module"` e um chunk JavaScript acima de 500 kB.
 - Não há referências ao Beauty Academy no código do projeto; a única ocorrência é esta regra de separação no próprio TODO.
-- Próximo passo recomendado: repetir a validação visual autenticada, sem iniciar integrações externas nem publicação automática.
+- Próximo passo recomendado nesta etapa histórica: repetir a validação visual autenticada; a integração server-side de texto foi implementada posteriormente na branch `feat/ai-content-generation`.
 
 ## Preparação para desenvolvimento em múltiplas contas Manus
 
@@ -107,16 +107,16 @@ Abrir um Pull Request de `chore/multi-account-continuity` para `main` após revi
 - [x] Criar testes unitários de validação, prompt e parsing sem chamar o provedor real.
 - [x] Aplicar `pnpm db:migrate` no banco do novo projeto WebDev; a migração aditiva foi executada com sucesso nesta sessão.
 - [ ] Executar uma geração real autenticada com o serviço Manus, somente após confirmar que o ambiente possui credenciais e que o consumo de créditos está autorizado.
-- [ ] Publicar a branch `feat/ai-content-generation` no GitHub após a revisão final e confirmar o SHA remoto.
+- [x] Publicar a branch `feat/ai-content-generation` no GitHub e confirmar o SHA remoto: `21b9c75d45d255b186b4d2f1673b99e19b17c43e`.
 
 ## Validação da implementação de IA
 
 - `pnpm check`: passou.
 - `pnpm test`: passou com 4 arquivos e 13 testes; nenhum teste chamou o provedor real.
 - `pnpm build`: compilação do frontend e servidor concluída; permanecem os avisos não bloqueantes do starter sobre `type="module"` e chunk acima de 500 kB.
-- `pnpm drizzle-kit generate`: criou a migração aditiva da coluna `contents.generationType`; não aplicou DDL ao banco.
-- Não declarar geração real funcionando até executar um teste autenticado com o provedor configurado.
+- `pnpm drizzle-kit generate`: criou a migração aditiva da coluna `contents.generationType`; depois `pnpm db:migrate` foi executado com sucesso no banco do novo projeto WebDev.
+- A integração está implementada, mas a geração real ainda não foi chamada nesta sessão; não declarar resposta real do provedor nem consumo de créditos sem esse teste autenticado.
 
 ## Próxima tarefa recomendada
 
-Revisar a diff da branch e realizar uma única geração real autenticada com um pedido controlado, verificar o resultado e o salvamento associado à empresa correta. Só então publicar a branch no GitHub; não fazer push direto na `main` e não habilitar publicação automática.
+Realizar uma única geração real autenticada com um pedido controlado, verificar o resultado e o salvamento associado à empresa correta e, em seguida, abrir um Pull Request da branch publicada. Não fazer push direto na `main` e não habilitar publicação automática.

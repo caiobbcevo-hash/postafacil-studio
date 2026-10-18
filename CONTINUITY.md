@@ -110,7 +110,7 @@ Resolver os arquivos marcados, revisar `git diff`, executar `git diff --check`, 
 
 ## Próxima tarefa recomendada
 
-A branch `chore/multi-account-continuity` já está publicada e confirmada no SHA `fec74324dcb0577cf82e2ab95cbbb8b4386ff852`. A próxima etapa é abrir o Pull Request para `main` e repetir a validação visual autenticada no Preview com uma sessão Manus funcional. Só depois deve ser planejada a primeira integração real de IA, começando por um endpoint server-side com limites, confirmação explícita de custo e teste mockado. Não iniciar integrações externas, não alterar infraestrutura e não publicar o aplicativo automaticamente antes dessa revisão.
+A branch `chore/multi-account-continuity` permanece publicada no SHA `fec74324dcb0577cf82e2ab95cbbb8b4386ff852`. A implementação posterior de IA está publicada em `feat/ai-content-generation`, SHA `21b9c75d45d255b186b4d2f1673b99e19b17c43e`. A próxima etapa é executar uma única geração real autenticada e controlada, se o ambiente tiver credenciais e houver autorização para consumir créditos; depois, abrir o Pull Request para `main`. Não fazer push direto na `main`, não versionar secrets e não habilitar publicação automática.
 
 
 ## Nova branch: geração real de conteúdo com IA
@@ -123,4 +123,4 @@ A migração `drizzle/0003_absent_post.sql` adiciona `contents.generationType` c
 
 Validações desta branch: `pnpm check` passou; `pnpm test` passou com 4 arquivos e 13 testes, sem chamadas externas; `pnpm build` passou com os dois avisos não bloqueantes já conhecidos. Ainda não há evidência de uma geração real com créditos: isso depende de `MANUS_API_URL`, `MANUS_API_KEY`, uma sessão autenticada e autorização para consumir créditos.
 
-A próxima etapa segura é revisar a diff, confirmar a aplicação da migração no banco autorizado, executar uma única geração real controlada e verificar o salvamento na empresa correta. Depois, publicar esta branch no GitHub e confirmar o SHA. Não fazer push direto na `main`, não versionar secrets e não habilitar publicação automática.
+A próxima etapa segura é executar uma única geração real controlada e verificar o salvamento na empresa correta. A branch já está publicada e confirmada no GitHub; depois do teste, abrir o Pull Request. Não fazer push direto na `main`, não versionar secrets e não habilitar publicação automática.
