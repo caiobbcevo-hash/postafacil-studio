@@ -101,7 +101,12 @@ export async function generateContentForOwner(ownerId: number, input: AiGenerati
     maxTokens: 1800,
   });
 
-  const text = response.choices?.[0]?.message?.content;
-  if (typeof text !== "string" || !text.trim()) throw new Error("A IA não retornou conteúdo");
+  const rawContent = response.choices?.[0]?.message?.content;
+  const text = typeof rawContent === "string"
+    ? rawContent
+    : Array.isArray(rawContent)
+      ? rawContent.map(part => typeof part === "object" && part !== null && "text" in part ? String(part.text) : "").join("\n").trim()
+      : "";
+  if (!text) throw new Error("A IA não retornou conteúdo");
   return { ...parseGeneratedContent(text), generationType: input.generationType, companyId: input.companyId };
 }
