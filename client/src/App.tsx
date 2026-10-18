@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
+import DemoPreview from "@/pages/DemoPreview";
 import Studio from "@/pages/Studio";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -9,6 +10,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 function Router() {
   return (
     <Switch>
+      <Route path="/demo" component={DemoPreview} />
       <Route path="/" component={Studio} />
       <Route path="/painel" component={Studio} />
       <Route path="/empresa" component={Studio} />
