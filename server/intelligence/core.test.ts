@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { contentObjectiveSchema } from "./contracts";
 import { IntelligenceError } from "./errors";
 import { buildExecutionPlan } from "./planner";
@@ -28,6 +28,10 @@ function plan(mode: "plan" | "draft" = "draft") {
 }
 
 describe("intelligence core", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("validates structured objectives and rejects client ownerId", () => {
     expect(objective.requestedCapabilities).toEqual([]);
     expect(() =>
@@ -108,5 +112,28 @@ describe("intelligence core", () => {
         draftPlan
       )
     ).toThrowError(/não corresponde/);
+  });
+
+  it("does not perform network or HTTP calls in any simulator mode", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const draftPlan = plan("draft");
+
+    simulatePlan(plan("plan"));
+    simulateDraft(draftPlan, objective);
+    expect(() => simulateExecute(draftPlan)).toThrowError(/bloqueado/);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects a result that declares publication as completed", () => {
+    const planResult = plan("plan");
+    const publishedResult = {
+      ...simulatePlan(planResult),
+      status: "published",
+    };
+
+    expect(() =>
+      verifySimulationResult(publishedResult, planResult)
+    ).toThrowError(/não atende ao contrato/);
   });
 });

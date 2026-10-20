@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import * as simulator from "./intelligence/providers/simulator";
 
 const dbMocks = vi.hoisted(() => ({
   getCompanyForOwner: vi.fn(),
@@ -49,6 +50,10 @@ const objective = {
 };
 
 describe("intelligence.run", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     dbMocks.getCompanyForOwner.mockResolvedValue({ id: 17, ownerId: 42 });
@@ -91,8 +96,11 @@ describe("intelligence.run", () => {
 
   it("blocks execute before any external provider can run", async () => {
     const caller = appRouter.createCaller(createContext(createUser(42)));
+    const executeSpy = vi.spyOn(simulator, "simulateExecute");
+
     await expect(
       caller.intelligence.run({ mode: "execute", objective })
     ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect(executeSpy).not.toHaveBeenCalled();
   });
 });
