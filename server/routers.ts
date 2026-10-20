@@ -18,6 +18,13 @@ import { COOKIE_NAME } from "@shared/const";
 import { normalizeOptionalUrl } from "@shared/optionalUrl";
 import { TRPCError } from "@trpc/server";
 import { aiGenerationInput, generateContentForOwner } from "./aiContent";
+import { contentObjectiveSchema, intelligenceModeSchema } from "./intelligence/contracts";
+import { IntelligenceError } from "./intelligence/errors";
+import { buildExecutionPlan } from "./intelligence/planner";
+import { authorizeObjective } from "./intelligence/policy";
+import { createCapabilityRegistry } from "./intelligence/registry";
+import { simulateDraft, simulateExecute, simulatePlan } from "./intelligence/providers/simulator";
+import { verifySimulationResult } from "./intelligence/verification";
 
 const requiredText = (label: string, max: number) => z.string().trim().min(1, `${label} é obrigatório`).max(max, `${label} excede o limite`);
 
@@ -55,6 +62,43 @@ const contentInput = z.object({
 
 export const appRouter = router({
   system: systemRouter,
+  intelligence: router({
+    run: protectedProcedure
+      .input(z.object({ mode: intelligenceModeSchema, objective: contentObjectiveSchema }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const company = await getCompanyForOwner(ctx.user.id, input.objective.companyId);
+          const authorization = authorizeObjective({
+            authenticatedOwnerId: ctx.user.id,
+            objective: input.objective,
+            company,
+            mode: input.mode,
+          });
+          const plan = buildExecutionPlan({
+            objective: input.objective,
+            ownerId: authorization.ownerId,
+            mode: input.mode,
+            registry: createCapabilityRegistry(),
+          });
+          const result = input.mode === "plan"
+            ? simulatePlan(plan)
+            : input.mode === "draft"
+              ? simulateDraft(plan, input.objective)
+              : simulateExecute(plan);
+          return { plan, result: verifySimulationResult(result, plan) };
+        } catch (error) {
+          if (error instanceof IntelligenceError) {
+            const code = error.code === "UNAUTHENTICATED" ? "UNAUTHORIZED"
+              : error.code === "COMPANY_NOT_FOUND" || error.code === "COMPANY_NOT_OWNED" ? "NOT_FOUND"
+                : error.code === "INVALID_OBJECTIVE" ? "BAD_REQUEST"
+                  : error.code === "EXTERNAL_EXECUTION_BLOCKED" ? "PRECONDITION_FAILED"
+                    : "BAD_REQUEST";
+            throw new TRPCError({ code, message: error.message });
+          }
+          throw error;
+        }
+      }),
+  }),
   ai: router({
     generateContent: protectedProcedure.input(aiGenerationInput).mutation(async ({ ctx, input }) => {
       try {
