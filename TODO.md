@@ -120,3 +120,26 @@ O PR #1 já foi integrado. A próxima tarefa é repetir a validação visual aut
 ## Próxima tarefa recomendada
 
 O PR #1 foi integrado em `3bc84cee93953388108c2567ee7f3cf075b4f8aa`. Aguardar a validação visual autenticada antes de iniciar outra funcionalidade; não repetir migrações sem verificar o banco e não habilitar publicação automática.
+
+
+## Branch `test/reliability-contracts` — confiabilidade sem escrita no banco
+
+- [x] Confirmar que a branch foi criada a partir da `main` no merge commit `3bc84cee93953388108c2567ee7f3cf075b4f8aa`.
+- [x] Confirmar que o PR #2 foi integrado à `main` sem alterar o escopo dos testes desta branch.
+- [x] Revisar a infraestrutura existente: o projeto usa Vitest; não há Playwright, Cypress ou outro runner E2E instalado.
+- [x] Adicionar `server/routers.ownership.test.ts` com contratos para autenticação obrigatória, seleção de empresa, leitura de conteúdos, criação/edição de rascunho, recuperação e propagação do proprietário autenticado.
+- [x] Cobrir a prevenção de substituição de identidade em uma leitura de conteúdo e a preservação do `companyId` no fluxo de salvamento.
+- [x] Manter os testes sem escrita no MySQL compartilhado, sem chamadas ao provedor de IA e sem migrações.
+- [ ] Adicionar E2E autenticado real somente quando houver um ambiente de teste isolado e um mecanismo de sessão não dependente de credenciais reais.
+
+## Validação desta etapa
+
+- `pnpm exec vitest run server/routers.ownership.test.ts`: passou com 5 testes.
+- `pnpm check`: passou após corrigir a expectativa do default `generationType: reel`.
+- `pnpm test`: passou com 5 arquivos e 18 testes; nenhum teste chamou o provedor real.
+- `pnpm build`: compilação do frontend e servidor concluída; permanecem os dois avisos não bloqueantes conhecidos do starter.
+- `git diff --check`: passou.
+
+## Próxima tarefa recomendada
+
+Após resolver e validar a atualização da branch, aguardar a revisão do PR #3. A cobertura adicionada é um contrato de roteador com mocks; ela não substitui um E2E autenticado nem um teste de integração em banco isolado. Não executar testes destrutivos ou escrever no banco compartilhado nesta etapa.

@@ -124,3 +124,20 @@ A migração `drizzle/0003_absent_post.sql` adiciona `contents.generationType` c
 Validações desta branch: `pnpm check` passou; `pnpm test` passou com 4 arquivos e 13 testes, sem chamadas externas; `pnpm build` passou com os dois avisos não bloqueantes já conhecidos. Ainda não há evidência de uma geração real com créditos: isso depende de `MANUS_API_URL`, `MANUS_API_KEY`, uma sessão autenticada e autorização para consumir créditos.
 
 A geração real controlada já foi executada com sucesso; o rascunho `150001` foi salvo e recuperado na empresa `1`. O Pull Request #1 foi integrado em `main`: https://github.com/caiobbcevo-hash/postafacil-studio/pull/1. A próxima etapa é validar a interface autenticada usando esse rascunho, sem repetir a geração ou consumir novos créditos sem autorização. Não fazer push direto na `main`, não versionar secrets e não habilitar publicação automática.
+
+
+## Branch `test/reliability-contracts` — etapa atual
+
+A branch foi criada a partir da `main` no merge commit `3bc84cee93953388108c2567ee7f3cf075b4f8aa`, sem alterar a `main`. O PR #2 foi integrado na `main`: https://github.com/caiobbcevo-hash/postafacil-studio/pull/2.
+
+A infraestrutura existente usa Vitest (`pnpm test`) e não possui Playwright, Cypress ou outro executor E2E instalado. Para não escrever no MySQL compartilhado nem depender de credenciais reais, foi adicionado `server/routers.ownership.test.ts`. O teste usa mocks do repositório para verificar os contratos do tRPC: autenticação obrigatória, passagem do `ownerId`, vínculo do `companyId`, criação/edição/recuperação de rascunhos e não substituição da identidade de outro usuário.
+
+Validação concluída nesta branch:
+- `pnpm exec vitest run server/routers.ownership.test.ts`: 5 testes aprovados.
+- `pnpm check`: aprovado.
+- `pnpm test`: 5 arquivos e 18 testes aprovados; nenhum teste chamou o provedor real.
+- `pnpm build`: frontend e servidor compilados; permanecem os dois avisos não bloqueantes conhecidos do starter.
+- `git diff --check`: aprovado.
+- Não houve chamada ao provedor de IA, migração, escrita no banco ou publicação externa.
+
+A resolução do conflito deve preservar os quatro arquivos de teste e a documentação pós-merge. A cobertura atual é de contrato de roteador; um E2E autenticado real depende de ambiente de teste isolado e mecanismo de sessão que não exija credenciais reais. Não adicionar credenciais ao repositório e não usar o banco compartilhado para testes destrutivos.
