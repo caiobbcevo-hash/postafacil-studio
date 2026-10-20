@@ -1,11 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MySqlDialect } from "drizzle-orm/mysql-core";
 import { companies } from "../drizzle/schema";
+import {
+  ContentLifecycleError,
+  ContentNotFoundError,
+  ContentTransitionConflictError,
+} from "./contentLifecycle";
 
 const state = vi.hoisted(() => ({
   selectedCompany: undefined as Record<string, unknown> | undefined,
   selectedContent: undefined as Record<string, unknown> | undefined,
   updateWhere: undefined as unknown,
+  updateValues: undefined as unknown,
   deleteWhere: undefined as unknown,
   insertValues: undefined as unknown,
   updateCalls: 0,
@@ -51,14 +57,17 @@ vi.mock("drizzle-orm/mysql2", () => ({
       },
     }),
     update: () => ({
-      set: () => ({
+      set: (values: unknown) => {
+        state.updateValues = values;
+        return {
         where: async (condition: unknown) => {
           state.updateWhere = condition;
           state.updateCalls += 1;
           state.afterUpdate?.();
           return [{ affectedRows: state.updateAffectedRows }, []];
         },
-      }),
+        };
+      },
     }),
     delete: () => ({
       where: async (condition: unknown) => {
@@ -70,8 +79,12 @@ vi.mock("drizzle-orm/mysql2", () => ({
   })),
 }));
 
-const { createContentForOwner, deleteContentForOwner, updateContentForOwner } =
-  await import("./db");
+const {
+  createContentForOwner,
+  deleteContentForOwner,
+  transitionContentForOwner,
+  updateContentForOwner,
+} = await import("./db");
 
 const dialect = new MySqlDialect();
 
@@ -121,6 +134,7 @@ describe("content mutation ownership", () => {
     state.selectedCompany = { id: 17, ownerId: 42 };
     state.selectedContent = undefined;
     state.updateWhere = undefined;
+    state.updateValues = undefined;
     state.deleteWhere = undefined;
     state.insertValues = undefined;
     state.updateCalls = 0;
@@ -152,6 +166,52 @@ describe("content mutation ownership", () => {
     await expect(
       updateContentForOwner(42, 150001, { caption: "Legenda revisada" })
     ).resolves.toMatchObject({ id: 150001, companyId: 17 });
+    expect(state.updateCalls).toBe(1);
+  });
+
+  it("transitions an owned draft to review using the existing policy and an owner-scoped compare-and-set", async () => {
+    state.selectedContent = contentForCompany(17);
+    state.afterUpdate = () => {
+      state.selectedContent = {
+        ...state.selectedContent,
+        status: "pending_approval",
+      };
+    };
+
+    await expect(
+      transitionContentForOwner(42, 150001, "pending_approval", "editor")
+    ).resolves.toMatchObject({ id: 150001, companyId: 17, status: "pending_approval" });
+    expect(state.updateValues).toEqual({ status: "pending_approval" });
+    expect(sqlText(state.updateWhere)).toContain("`contents`.`id` = ?");
+    expect(sqlText(state.updateWhere)).toContain("`contents`.`status` = ?");
+    expect(sqlText(state.updateWhere)).toContain(
+      "`contents`.`companyId` in (select `companies`.`id` from `companies` where `companies`.`ownerId` = ?)"
+    );
+  });
+
+  it("rejects a transition when content is not owned by the authenticated user", async () => {
+    await expect(
+      transitionContentForOwner(84, 150001, "approved", "approver")
+    ).rejects.toBeInstanceOf(ContentNotFoundError);
+    expect(state.updateCalls).toBe(0);
+  });
+
+  it("rejects an editorial transition disallowed by the lifecycle policy", async () => {
+    state.selectedContent = contentForCompany(17);
+
+    await expect(
+      transitionContentForOwner(42, 150001, "approved", "approver")
+    ).rejects.toBeInstanceOf(ContentLifecycleError);
+    expect(state.updateCalls).toBe(0);
+  });
+
+  it("rejects a concurrent lifecycle change when the compare-and-set affects no row", async () => {
+    state.selectedContent = contentForCompany(17);
+    state.updateAffectedRows = 0;
+
+    await expect(
+      transitionContentForOwner(42, 150001, "pending_approval", "editor")
+    ).rejects.toBeInstanceOf(ContentTransitionConflictError);
     expect(state.updateCalls).toBe(1);
   });
 
@@ -202,7 +262,7 @@ describe("content mutation ownership", () => {
     expect(state.insertValues).toMatchObject({ status: "draft" });
   });
 
-  it.each(["published", "scheduled", "failed"])(
+  it.each(["published", "scheduled", "failed", "pending_approval", "approved"])(
     "rejects a direct database update to %s",
     async status => {
       state.selectedContent = contentForCompany(17);

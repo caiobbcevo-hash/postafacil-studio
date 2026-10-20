@@ -12,11 +12,17 @@ import {
   listCompaniesForOwner,
   listContentsForOwner,
   updateCompanyForOwner,
+  transitionContentForOwner,
   updateContentForOwner,
 } from "./db";
 import { COOKIE_NAME } from "@shared/const";
 import { normalizeOptionalUrl } from "@shared/optionalUrl";
 import { TRPCError } from "@trpc/server";
+import {
+  ContentLifecycleError,
+  ContentNotFoundError,
+  ContentTransitionConflictError,
+} from "./contentLifecycle";
 import { aiGenerationInput, generateContentForOwner } from "./aiContent";
 import { contentObjectiveSchema, intelligenceModeSchema } from "./intelligence/contracts";
 import { IntelligenceError } from "./intelligence/errors";
@@ -65,6 +71,30 @@ const contentUpdateInput = contentFields
   .extend({ status: z.literal("draft").optional() })
   .strict()
   .transform(({ status: _status, ...data }) => data);
+
+const editorialContentIdInput = z.object({ id: z.number().int().positive() }).strict();
+
+async function transitionEditorialContent(
+  ownerId: number,
+  contentId: number,
+  to: "pending_approval" | "approved" | "draft",
+  actor: "editor" | "approver"
+) {
+  try {
+    return await transitionContentForOwner(ownerId, contentId, to, actor);
+  } catch (error) {
+    if (error instanceof ContentNotFoundError) {
+      throw new TRPCError({ code: "NOT_FOUND", message: error.message });
+    }
+    if (error instanceof ContentLifecycleError) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+    }
+    if (error instanceof ContentTransitionConflictError) {
+      throw new TRPCError({ code: "CONFLICT", message: error.message });
+    }
+    throw error;
+  }
+}
 
 export const appRouter = router({
   system: systemRouter,
@@ -145,6 +175,15 @@ export const appRouter = router({
     get: protectedProcedure.input(z.object({ id: z.number().int().positive() })).query(({ ctx, input }) => getContentForOwner(ctx.user.id, input.id)),
     create: protectedProcedure.input(contentCreateInput).mutation(({ ctx, input }) => createContentForOwner(ctx.user.id, input)),
     update: protectedProcedure.input(z.object({ id: z.number().int().positive(), data: contentUpdateInput })).mutation(({ ctx, input }) => updateContentForOwner(ctx.user.id, input.id, input.data)),
+    requestReview: protectedProcedure.input(editorialContentIdInput).mutation(({ ctx, input }) =>
+      transitionEditorialContent(ctx.user.id, input.id, "pending_approval", "editor")
+    ),
+    approve: protectedProcedure.input(editorialContentIdInput).mutation(({ ctx, input }) =>
+      transitionEditorialContent(ctx.user.id, input.id, "approved", "approver")
+    ),
+    returnForRevision: protectedProcedure.input(editorialContentIdInput).mutation(({ ctx, input }) =>
+      transitionEditorialContent(ctx.user.id, input.id, "draft", "editor")
+    ),
     delete: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
       await deleteContentForOwner(ctx.user.id, input.id);
       return { success: true } as const;

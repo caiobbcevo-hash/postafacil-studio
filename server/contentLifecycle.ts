@@ -38,6 +38,20 @@ export class ContentLifecycleError extends Error {
   }
 }
 
+export class ContentNotFoundError extends Error {
+  constructor() {
+    super("Conteúdo não encontrado.");
+    this.name = "ContentNotFoundError";
+  }
+}
+
+export class ContentTransitionConflictError extends Error {
+  constructor() {
+    super("O conteúdo foi alterado durante a transição. Recarregue e tente novamente.");
+    this.name = "ContentTransitionConflictError";
+  }
+}
+
 const transitions: Record<
   ContentStatus,
   Partial<Record<ContentTransitionActor, ContentStatus[]>>
