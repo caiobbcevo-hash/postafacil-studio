@@ -51,7 +51,7 @@ jobs:
 
       - name: Run real MySQL ownership integration checks
         run: |
-          cat > /tmp/pr7-mysql-integration.mts <<'EOF'
+          cat > "$GITHUB_WORKSPACE/pr7-mysql-integration.mts" <<'EOF'
           import assert from "node:assert/strict";
           import { pathToFileURL } from "node:url";
           import mysql from "mysql2/promise";
@@ -165,7 +165,8 @@ jobs:
           await connection.end();
           console.log("Disposable MySQL ownership integration checks passed");
           EOF
-          pnpm exec tsx /tmp/pr7-mysql-integration.mts
+          pnpm exec tsx "$GITHUB_WORKSPACE/pr7-mysql-integration.mts"
+          rm "$GITHUB_WORKSPACE/pr7-mysql-integration.mts"
 
       - name: Typecheck
         run: pnpm check
