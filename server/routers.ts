@@ -60,7 +60,11 @@ const contentFields = z.object({
 });
 
 const contentCreateInput = contentFields;
-const contentUpdateInput = contentFields.partial().strict();
+const contentUpdateInput = contentFields
+  .partial()
+  .extend({ status: z.literal("draft").optional() })
+  .strict()
+  .transform(({ status: _status, ...data }) => data);
 
 export const appRouter = router({
   system: systemRouter,

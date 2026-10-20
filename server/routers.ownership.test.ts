@@ -107,7 +107,7 @@ describe("authenticated ownership contracts", () => {
     await caller.contents.create({ ...contentInput, status: "published" });
     await caller.contents.update({
       id: 150001,
-      data: { companyId: 17, caption: "Legenda revisada." },
+      data: { companyId: 17, caption: "Legenda revisada.", status: "draft" },
     });
 
     expect(dbMocks.createContentForOwner).toHaveBeenCalledWith(42, contentInput);
