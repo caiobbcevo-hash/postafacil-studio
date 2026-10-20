@@ -262,7 +262,7 @@ describe("content mutation ownership", () => {
     expect(state.insertValues).toMatchObject({ status: "draft" });
   });
 
-  it.each(["published", "scheduled", "failed"])(
+  it.each(["published", "scheduled", "failed", "pending_approval", "approved"])(
     "rejects a direct database update to %s",
     async status => {
       state.selectedContent = contentForCompany(17);

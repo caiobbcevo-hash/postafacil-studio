@@ -121,7 +121,7 @@ describe("authenticated ownership contracts", () => {
     });
   });
 
-  it.each(["published", "scheduled", "failed"])(
+  it.each(["published", "scheduled", "failed", "pending_approval", "approved"])(
     "rejects a common CRUD update to %s",
     async status => {
       const caller = appRouter.createCaller(createContext(createUser(42)));
