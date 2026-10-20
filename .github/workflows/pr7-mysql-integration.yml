@@ -1,0 +1,180 @@
+name: PR 7 MySQL integration
+
+on:
+  push:
+    branches:
+      - ci/pr7-mysql-integration
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mysql-integration:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: postafacil_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/postafacil_test
+      NODE_ENV: test
+    steps:
+      - name: Checkout isolated CI branch
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Initialize disposable schema
+        run: pnpm db:migrate
+
+      - name: Run real MySQL ownership integration checks
+        run: |
+          cat > /tmp/pr7-mysql-integration.mts <<'EOF'
+          import assert from "node:assert/strict";
+          import { pathToFileURL } from "node:url";
+          import mysql from "mysql2/promise";
+
+          const workspace = process.env.GITHUB_WORKSPACE;
+          if (!workspace) throw new Error("GITHUB_WORKSPACE is required");
+          const db = await import(pathToFileURL(`${workspace}/server/db.ts`).href);
+          const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+
+          const companyInput = (name: string) => ({
+            name,
+            segment: "Decoração",
+            products: "Móveis artesanais",
+            services: "Consultoria de ambientes",
+            targetAudience: "Pessoas que valorizam casas acolhedoras",
+            voiceTone: "Acolhedor e didático",
+            brandColors: "Terracota e azul petróleo",
+            links: "https://example.test",
+            logoUrl: null,
+          });
+
+          const contentInput = (companyId: number) => ({
+            companyId,
+            title: "Coleção Aurora",
+            contentType: "reel" as const,
+            generationType: "reel" as const,
+            format: "9:16 vertical",
+            duration: "30 segundos",
+            briefing: "Apresentar a nova coleção",
+            script: "Roteiro revisável",
+            scenes: "Cena 1",
+            voice: "Narração acolhedora",
+            track: "Trilha leve",
+            caption: "Conheça a coleção Aurora.",
+            status: "draft" as const,
+          });
+
+          const [userResult] = await connection.execute(
+            "INSERT INTO users (openId, name, email) VALUES (?, ?, ?), (?, ?, ?)",
+            ["integration-owner-a", "Owner A", "owner-a@example.test", "integration-owner-b", "Owner B", "owner-b@example.test"]
+          );
+          assert.equal((userResult as mysql.ResultSetHeader).affectedRows, 2);
+          const [userRows] = await connection.execute(
+            "SELECT id, openId FROM users WHERE openId IN (?, ?) ORDER BY id",
+            ["integration-owner-a", "integration-owner-b"]
+          );
+          const users = userRows as Array<{ id: number; openId: string }>;
+          assert.equal(users.length, 2);
+          const ownerA = users[0].id;
+          const ownerB = users[1].id;
+
+          const companyA = await db.createCompanyForOwner(ownerA, companyInput("Company A"));
+          const companyB = await db.createCompanyForOwner(ownerB, companyInput("Company B"));
+
+          const created = await db.createContentForOwner(ownerA, contentInput(companyA.id));
+          const updated = await db.updateContentForOwner(ownerA, created.id, {
+            caption: created.caption,
+          });
+          assert.equal(updated.id, created.id);
+          assert.equal(updated.companyId, companyA.id);
+
+          await assert.rejects(
+            db.updateContentForOwner(ownerB, created.id, { caption: "Unauthorized" }),
+            /Content not found/
+          );
+          await assert.rejects(
+            db.deleteContentForOwner(ownerB, created.id),
+            /Content not found/
+          );
+          await assert.rejects(
+            db.createContentForOwner(ownerB, contentInput(companyA.id)),
+            /Company not found/
+          );
+          await assert.rejects(
+            db.updateContentForOwner(ownerA, created.id, { companyId: companyB.id }),
+            /Company not found/
+          );
+
+          const deletable = await db.createContentForOwner(ownerA, contentInput(companyA.id));
+          await db.deleteContentForOwner(ownerA, deletable.id);
+          const [deletedRows] = await connection.execute(
+            "SELECT id FROM contents WHERE id = ?",
+            [deletable.id]
+          );
+          assert.equal((deletedRows as unknown[]).length, 0);
+
+          const [ownershipUpdate] = await connection.execute(
+            "UPDATE companies SET ownerId = ? WHERE id = ?",
+            [ownerB, companyA.id]
+          );
+          assert.equal((ownershipUpdate as mysql.ResultSetHeader).affectedRows, 1);
+
+          const [blockedUpdate] = await connection.execute(
+            "UPDATE contents SET caption = caption WHERE id = ? AND companyId IN (SELECT id FROM companies WHERE ownerId = ?)",
+            [created.id, ownerA]
+          );
+          assert.equal((blockedUpdate as mysql.ResultSetHeader).affectedRows, 0);
+
+          const [blockedDelete] = await connection.execute(
+            "DELETE FROM contents WHERE id = ? AND companyId IN (SELECT id FROM companies WHERE ownerId = ?)",
+            [created.id, ownerA]
+          );
+          assert.equal((blockedDelete as mysql.ResultSetHeader).affectedRows, 0);
+
+          const [sameValueRows] = await connection.execute(
+            "UPDATE contents SET caption = caption WHERE id = ? AND companyId IN (SELECT id FROM companies WHERE ownerId = ?)",
+            [created.id, ownerB]
+          );
+          assert.equal((sameValueRows as mysql.ResultSetHeader).affectedRows, 0);
+
+          await connection.end();
+          console.log("Disposable MySQL ownership integration checks passed");
+          EOF
+          pnpm exec tsx /tmp/pr7-mysql-integration.mts
+
+      - name: Typecheck
+        run: pnpm check
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Production build
+        run: pnpm build
+
+      - name: Git diff check
+        run: git diff --check
