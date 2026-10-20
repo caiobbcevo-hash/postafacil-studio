@@ -10,12 +10,26 @@ export const contentStatusSchema = z.enum([
 ]);
 
 export type ContentStatus = z.infer<typeof contentStatusSchema>;
+const contentTransitionActorSchema = z.enum([
+  "editor",
+  "approver",
+  "scheduler",
+  "publisher",
+  "executor",
+]);
+
 export type ContentTransitionActor =
   | "editor"
   | "approver"
   | "scheduler"
   | "publisher"
   | "executor";
+
+const contentTransitionInputSchema = z.object({
+  from: contentStatusSchema,
+  to: contentStatusSchema,
+  actor: contentTransitionActorSchema,
+});
 
 export class ContentLifecycleError extends Error {
   constructor(message: string) {
@@ -50,13 +64,21 @@ export function assertContentTransition(input: {
   to: ContentStatus;
   actor: ContentTransitionActor;
 }): ContentStatus {
-  const allowed = transitions[input.from][input.actor] ?? [];
-  if (!allowed.includes(input.to)) {
+  const parsed = contentTransitionInputSchema.safeParse(input);
+  if (!parsed.success) {
     throw new ContentLifecycleError(
-      `Transição de conteúdo não permitida: ${input.from} -> ${input.to}`
+      "Entrada inválida para transição de ciclo de vida do conteúdo."
     );
   }
-  return input.to;
+
+  const { from, to, actor } = parsed.data;
+  const allowed = transitions[from][actor] ?? [];
+  if (!allowed.includes(to)) {
+    throw new ContentLifecycleError(
+      `Transição de conteúdo não permitida: ${from} -> ${to}`
+    );
+  }
+  return to;
 }
 
 export function isContentTransitionAllowed(input: {
@@ -67,9 +89,8 @@ export function isContentTransitionAllowed(input: {
   try {
     assertContentTransition(input);
     return true;
-  } catch (error) {
-    if (error instanceof ContentLifecycleError) return false;
-    throw error;
+  } catch {
+    return false;
   }
 }
 

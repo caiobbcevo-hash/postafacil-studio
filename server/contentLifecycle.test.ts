@@ -69,6 +69,22 @@ describe("content lifecycle policy", () => {
     ).toThrow(ContentLifecycleError);
   });
 
+  it.each([
+    { from: "unknown", to: "draft", actor: "editor" },
+    { from: "draft", to: "unknown", actor: "editor" },
+    { from: "draft", to: "pending_approval", actor: "owner" },
+  ])("rejects invalid runtime transition values with a controlled error", input => {
+    expect(() => assertContentTransition(input as never)).toThrow(
+      ContentLifecycleError
+    );
+    expect(isContentTransitionAllowed(input as never)).toBe(false);
+  });
+
+  it("returns false when the transition input itself is invalid", () => {
+    expect(isContentTransitionAllowed(null as never)).toBe(false);
+    expect(isContentTransitionAllowed(undefined as never)).toBe(false);
+  });
+
   it("rejects status changes from the common CRUD path", () => {
     expect(() =>
       assertCrudStatusIsNotChanged({ caption: "ok", status: "published" })
