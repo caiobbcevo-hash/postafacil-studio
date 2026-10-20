@@ -163,6 +163,7 @@ jobs:
 
           await connection.end();
           console.log("Disposable MySQL ownership integration checks passed");
+          process.exit(0);
           EOF
           pnpm exec tsx "$GITHUB_WORKSPACE/pr7-mysql-integration.mts"
           rm "$GITHUB_WORKSPACE/pr7-mysql-integration.mts"
