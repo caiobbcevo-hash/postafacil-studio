@@ -207,7 +207,8 @@ export async function deleteContentForOwner(ownerId: number, contentId: number):
   const existing = await getContentForOwner(ownerId, contentId);
   if (!existing) throw new Error("Content not found");
   const ownedCompanyIds = sql`(select ${companies.id} from ${companies} where ${eq(companies.ownerId, ownerId)})`;
-  await db
+  const result = await db
     .delete(contents)
     .where(and(eq(contents.id, contentId), inArray(contents.companyId, ownedCompanyIds)));
+  if (result[0].affectedRows === 0) throw new Error("Content not found");
 }

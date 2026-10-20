@@ -1,38 +1,58 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MySqlDialect } from "drizzle-orm/mysql-core";
+import { companies } from "../drizzle/schema";
 
 const state = vi.hoisted(() => ({
+  selectedCompany: undefined as Record<string, unknown> | undefined,
   selectedContent: undefined as Record<string, unknown> | undefined,
   updateWhere: undefined as unknown,
   deleteWhere: undefined as unknown,
   updateCalls: 0,
   deleteCalls: 0,
+  updateAffectedRows: 1,
+  deleteAffectedRows: 1,
+  afterUpdate: undefined as (() => void) | undefined,
 }));
 
 vi.mock("drizzle-orm/mysql2", () => ({
   drizzle: vi.fn(() => ({
     select: () => ({
-      from: () => ({
-        innerJoin: () => ({
-          where: () => ({
-            limit: async () =>
-              state.selectedContent
-                ? [
-                    {
-                      content: state.selectedContent,
-                      companyName: "Casa Aurora",
-                    },
-                  ]
-                : [],
+      from: (table: unknown) => {
+        if (table === companies) {
+          return {
+            where: () => ({
+              limit: async () =>
+                state.selectedCompany ? [state.selectedCompany] : [],
+            }),
+          };
+        }
+        return {
+          innerJoin: () => ({
+            where: () => ({
+              limit: async () =>
+                state.selectedContent
+                  ? [
+                      {
+                        content: state.selectedContent,
+                        companyName: "Casa Aurora",
+                      },
+                    ]
+                  : [],
+            }),
           }),
-        }),
-      }),
+        };
+      },
+    }),
+    insert: () => ({
+      values: async () => [{ insertId: 150001 }],
     }),
     update: () => ({
       set: () => ({
         where: async (condition: unknown) => {
           state.updateWhere = condition;
           state.updateCalls += 1;
+          state.afterUpdate?.();
+          return [{ affectedRows: state.updateAffectedRows }, []];
         },
       }),
     }),
@@ -40,12 +60,14 @@ vi.mock("drizzle-orm/mysql2", () => ({
       where: async (condition: unknown) => {
         state.deleteWhere = condition;
         state.deleteCalls += 1;
+        return [{ affectedRows: state.deleteAffectedRows }, []];
       },
     }),
   })),
 }));
 
-const { deleteContentForOwner, updateContentForOwner } = await import("./db");
+const { createContentForOwner, deleteContentForOwner, updateContentForOwner } =
+  await import("./db");
 
 const dialect = new MySqlDialect();
 
@@ -74,14 +96,34 @@ function contentForCompany(companyId: number) {
   };
 }
 
+const contentInput = {
+  companyId: 17,
+  title: "Coleção Aurora",
+  contentType: "reel" as const,
+  generationType: "reel" as const,
+  format: "9:16 vertical",
+  duration: "30 segundos",
+  briefing: "Apresentar a nova coleção",
+  script: "Roteiro revisável",
+  scenes: "Cena 1",
+  voice: "Narração acolhedora",
+  track: "Trilha leve",
+  caption: "Conheça a coleção Aurora.",
+  status: "draft" as const,
+};
+
 describe("content mutation ownership", () => {
   beforeEach(() => {
     process.env.DATABASE_URL = "mysql://test-only";
+    state.selectedCompany = { id: 17, ownerId: 42 };
     state.selectedContent = undefined;
     state.updateWhere = undefined;
     state.deleteWhere = undefined;
     state.updateCalls = 0;
     state.deleteCalls = 0;
+    state.updateAffectedRows = 1;
+    state.deleteAffectedRows = 1;
+    state.afterUpdate = undefined;
   });
 
   it("rejects an update when the content is not owned by the authenticated user", async () => {
@@ -98,6 +140,61 @@ describe("content mutation ownership", () => {
     );
 
     expect(state.deleteCalls).toBe(0);
+  });
+
+  it("updates an authorized content successfully", async () => {
+    state.selectedContent = contentForCompany(17);
+
+    await expect(
+      updateContentForOwner(42, 150001, { caption: "Legenda revisada" })
+    ).resolves.toMatchObject({ id: 150001, companyId: 17 });
+    expect(state.updateCalls).toBe(1);
+  });
+
+  it("rejects when the final update predicate blocks a concurrent ownership change", async () => {
+    state.selectedContent = contentForCompany(17);
+    state.afterUpdate = () => {
+      state.selectedContent = undefined;
+    };
+
+    await expect(
+      updateContentForOwner(42, 150001, { caption: "Tentativa concorrente" })
+    ).rejects.toThrow("Content was not found after update");
+  });
+
+  it("deletes an authorized content when one row is affected", async () => {
+    state.selectedContent = contentForCompany(17);
+
+    await expect(deleteContentForOwner(42, 150001)).resolves.toBeUndefined();
+    expect(state.deleteCalls).toBe(1);
+  });
+
+  it("rejects a delete when the final predicate affects zero rows", async () => {
+    state.selectedContent = contentForCompany(17);
+    state.deleteAffectedRows = 0;
+
+    await expect(deleteContentForOwner(42, 150001)).rejects.toThrow(
+      "Content not found"
+    );
+    expect(state.deleteCalls).toBe(1);
+  });
+
+  it("rejects creating content for a company that does not exist or belong to the owner", async () => {
+    state.selectedCompany = undefined;
+
+    await expect(createContentForOwner(42, contentInput)).rejects.toThrow(
+      "Company not found"
+    );
+  });
+
+  it("rejects transferring content to a company that does not exist or belong to the owner", async () => {
+    state.selectedContent = contentForCompany(17);
+    state.selectedCompany = undefined;
+
+    await expect(
+      updateContentForOwner(42, 150001, { companyId: 99 })
+    ).rejects.toThrow("Company not found");
+    expect(state.updateCalls).toBe(0);
   });
 
   it("rechecks the authenticated owner in the final update predicate", async () => {
