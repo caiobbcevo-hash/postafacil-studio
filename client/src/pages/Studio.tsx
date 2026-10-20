@@ -442,7 +442,7 @@ function CreatorBrief({ form, update, onGenerate, generating }: { form: ContentF
 }
 
 function CreatorScript({ script, setScript }: { script: string; setScript: (value: string) => void }) {
-  return <div className="creator-form"><div className="form-section-title"><div className="step-badge"><FileText size={17} /></div><div><h2>Roteiro</h2><p>Edite o roteiro e mantenha a versão salva no planejamento.</p></div></div><label>Roteiro completo<textarea className="large-editor" value={script} onChange={e => setScript(e.target.value)} /></label><div className="editor-note"><Sparkles size={16} /><span>A geração por IA ainda não está conectada; este texto é editável e persistido no banco.</span></div></div>;
+  return <div className="creator-form"><div className="form-section-title"><div className="step-badge"><FileText size={17} /></div><div><h2>Roteiro</h2><p>Edite o roteiro e mantenha a versão salva no planejamento.</p></div></div><label>Roteiro completo<textarea className="large-editor" value={script} onChange={e => setScript(e.target.value)} /></label><div className="editor-note"><Sparkles size={16} /><span>A IA preenche o roteiro quando você gera na etapa Briefing. Este texto é editável e só é persistido quando você salva.</span></div></div>;
 }
 
 function CreatorScenes({ scenes, setScenes }: { scenes: string; setScenes: (value: string) => void }) {
