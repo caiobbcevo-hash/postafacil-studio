@@ -4,6 +4,7 @@ import type { InsertUser } from "../drizzle/schema";
 import { companies, contents, users } from "../drizzle/schema";
 import type { Company, Content } from "../drizzle/schema";
 import { ENV } from "./_core/env";
+import { assertCrudStatusIsNotChanged } from "./contentLifecycle";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -101,7 +102,6 @@ export type ContentInput = {
   track: string;
   caption: string;
   plannedAt?: Date | null;
-  status?: "draft" | "pending_approval" | "approved" | "scheduled" | "published" | "failed";
 };
 
 export type ContentPatch = Partial<Omit<ContentInput, "companyId">> & { companyId?: number };
@@ -177,7 +177,7 @@ export async function createContentForOwner(ownerId: number, input: ContentInput
   const db = await requireDb();
   const company = await getCompanyForOwner(ownerId, input.companyId);
   if (!company) throw new Error("Company not found");
-  const result = await db.insert(contents).values({ ...input, status: input.status ?? "draft" });
+  const result = await db.insert(contents).values({ ...input, status: "draft" });
   const contentId = Number(result[0].insertId);
   const created = await getContentForOwner(ownerId, contentId);
   if (!created) throw new Error("Content was not created");
@@ -186,6 +186,7 @@ export async function createContentForOwner(ownerId: number, input: ContentInput
 
 export async function updateContentForOwner(ownerId: number, contentId: number, input: ContentPatch): Promise<ContentWithCompany> {
   const db = await requireDb();
+  assertCrudStatusIsNotChanged(input);
   const existing = await getContentForOwner(ownerId, contentId);
   if (!existing) throw new Error("Content not found");
   if (input.companyId !== undefined) {
