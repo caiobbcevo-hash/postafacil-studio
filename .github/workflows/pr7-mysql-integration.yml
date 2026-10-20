@@ -112,6 +112,11 @@ jobs:
           });
           assert.equal(updated.id, created.id);
           assert.equal(updated.companyId, companyA.id);
+          const sameValueUpdate = await db.updateContentForOwner(ownerA, created.id, {
+            caption: created.caption,
+          });
+          assert.equal(sameValueUpdate.id, created.id);
+          assert.equal(sameValueUpdate.companyId, companyA.id);
 
           await assert.rejects(
             db.updateContentForOwner(ownerB, created.id, { caption: "Unauthorized" }),
@@ -155,12 +160,6 @@ jobs:
             [created.id, ownerA]
           );
           assert.equal((blockedDelete as mysql.ResultSetHeader).affectedRows, 0);
-
-          const [sameValueRows] = await connection.execute(
-            "UPDATE contents SET caption = caption WHERE id = ? AND companyId IN (SELECT id FROM companies WHERE ownerId = ?)",
-            [created.id, ownerB]
-          );
-          assert.equal((sameValueRows as mysql.ResultSetHeader).affectedRows, 0);
 
           await connection.end();
           console.log("Disposable MySQL ownership integration checks passed");
