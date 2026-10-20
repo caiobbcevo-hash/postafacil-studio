@@ -140,4 +140,10 @@ Validação concluída nesta branch:
 - `git diff --check`: aprovado.
 - Não houve chamada ao provedor de IA, migração, escrita no banco ou publicação externa.
 
-A resolução do conflito deve preservar os quatro arquivos de teste e a documentação pós-merge. A cobertura atual é de contrato de roteador; um E2E autenticado real depende de ambiente de teste isolado e mecanismo de sessão que não exija credenciais reais. Não adicionar credenciais ao repositório e não usar o banco compartilhado para testes destrutivos.
+A resolução do conflito preservou os quatro arquivos de documentação/teste e foi integrada à `main` pelo PR #3 no merge commit `16baa950c5274b58c8d2ff41804b336616d95f08`. A cobertura atual é de contrato de roteador; um E2E autenticado real depende de ambiente de teste isolado e mecanismo de sessão que não exija credenciais reais. Não adicionar credenciais ao repositório e não usar o banco compartilhado para testes destrutivos.
+
+## Estado atual após o PR #3
+
+A `main` está no commit `16baa950c5274b58c8d2ff41804b336616d95f08`. Os PRs #1, #2 e #3 estão integrados. A árvore passou novamente por `pnpm check`, `pnpm test` com 5 arquivos e 18 testes, `pnpm build` e `git diff --check`; o build mantém somente os dois avisos não bloqueantes já conhecidos.
+
+A próxima tarefa recomendada é validar visualmente no Preview autenticado a seleção de empresa, a abertura do rascunho `150001`, a edição, o salvamento e a reabertura. Para automatizar esse fluxo, criar antes um ambiente de teste isolado e uma sessão segura; não usar o MySQL compartilhado para testes destrutivos, não repetir migrações e não consumir créditos de IA sem autorização explícita.
