@@ -44,7 +44,6 @@ const contentInput = {
   voice: "Narração acolhedora",
   track: "Trilha leve",
   caption: "Conheça a coleção Aurora.",
-  status: "draft" as const,
 };
 
 function createUser(id: number): AuthenticatedUser {
@@ -105,10 +104,10 @@ describe("authenticated ownership contracts", () => {
   it("keeps the owner and company binding when creating and updating a draft", async () => {
     const caller = appRouter.createCaller(createContext(createUser(42)));
 
-    await caller.contents.create(contentInput);
+    await caller.contents.create({ ...contentInput, status: "published" });
     await caller.contents.update({
       id: 150001,
-      data: { companyId: 17, caption: "Legenda revisada." },
+      data: { companyId: 17, caption: "Legenda revisada.", status: "draft" },
     });
 
     expect(dbMocks.createContentForOwner).toHaveBeenCalledWith(42, contentInput);
@@ -118,6 +117,21 @@ describe("authenticated ownership contracts", () => {
       generationType: "reel",
     });
   });
+
+  it.each(["published", "scheduled", "failed"])(
+    "rejects a common CRUD update to %s",
+    async status => {
+      const caller = appRouter.createCaller(createContext(createUser(42)));
+
+      await expect(
+        caller.contents.update({
+          id: 150001,
+          data: { status } as never,
+        })
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+      expect(dbMocks.updateContentForOwner).not.toHaveBeenCalled();
+    }
+  );
 
   it("does not substitute another user's identity when the same record is requested", async () => {
     const caller = appRouter.createCaller(createContext(createUser(84)));

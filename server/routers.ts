@@ -43,7 +43,7 @@ export const companyInput = z.object({
   ),
 });
 
-const contentInput = z.object({
+const contentFields = z.object({
   companyId: z.number().int().positive(),
   title: requiredText("Título", 200),
   contentType: z.enum(["reel", "carrossel", "story"]),
@@ -57,8 +57,14 @@ const contentInput = z.object({
   track: requiredText("Trilha", 160),
   caption: requiredText("Legenda", 30000),
   plannedAt: z.coerce.date().nullable().optional(),
-  status: z.enum(["draft", "pending_approval", "approved", "scheduled", "published", "failed"]).optional(),
 });
+
+const contentCreateInput = contentFields;
+const contentUpdateInput = contentFields
+  .partial()
+  .extend({ status: z.literal("draft").optional() })
+  .strict()
+  .transform(({ status: _status, ...data }) => data);
 
 export const appRouter = router({
   system: systemRouter,
@@ -137,8 +143,8 @@ export const appRouter = router({
   contents: router({
     list: protectedProcedure.input(z.object({ companyId: z.number().int().positive().optional() }).optional()).query(({ ctx, input }) => listContentsForOwner(ctx.user.id, input?.companyId)),
     get: protectedProcedure.input(z.object({ id: z.number().int().positive() })).query(({ ctx, input }) => getContentForOwner(ctx.user.id, input.id)),
-    create: protectedProcedure.input(contentInput).mutation(({ ctx, input }) => createContentForOwner(ctx.user.id, input)),
-    update: protectedProcedure.input(z.object({ id: z.number().int().positive(), data: contentInput.partial() })).mutation(({ ctx, input }) => updateContentForOwner(ctx.user.id, input.id, input.data)),
+    create: protectedProcedure.input(contentCreateInput).mutation(({ ctx, input }) => createContentForOwner(ctx.user.id, input)),
+    update: protectedProcedure.input(z.object({ id: z.number().int().positive(), data: contentUpdateInput })).mutation(({ ctx, input }) => updateContentForOwner(ctx.user.id, input.id, input.data)),
     delete: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
       await deleteContentForOwner(ctx.user.id, input.id);
       return { success: true } as const;

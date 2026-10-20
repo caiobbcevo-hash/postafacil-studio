@@ -7,6 +7,7 @@ const state = vi.hoisted(() => ({
   selectedContent: undefined as Record<string, unknown> | undefined,
   updateWhere: undefined as unknown,
   deleteWhere: undefined as unknown,
+  insertValues: undefined as unknown,
   updateCalls: 0,
   deleteCalls: 0,
   updateAffectedRows: 1,
@@ -44,7 +45,10 @@ vi.mock("drizzle-orm/mysql2", () => ({
       },
     }),
     insert: () => ({
-      values: async () => [{ insertId: 150001 }],
+      values: async (values: unknown) => {
+        state.insertValues = values;
+        return [{ insertId: 150001 }];
+      },
     }),
     update: () => ({
       set: () => ({
@@ -109,7 +113,6 @@ const contentInput = {
   voice: "Narração acolhedora",
   track: "Trilha leve",
   caption: "Conheça a coleção Aurora.",
-  status: "draft" as const,
 };
 
 describe("content mutation ownership", () => {
@@ -119,6 +122,7 @@ describe("content mutation ownership", () => {
     state.selectedContent = undefined;
     state.updateWhere = undefined;
     state.deleteWhere = undefined;
+    state.insertValues = undefined;
     state.updateCalls = 0;
     state.deleteCalls = 0;
     state.updateAffectedRows = 1;
@@ -186,6 +190,29 @@ describe("content mutation ownership", () => {
       "Company not found"
     );
   });
+
+  it("forces a new content record to draft even if an untyped caller sends a privileged status", async () => {
+    state.selectedContent = contentForCompany(17);
+
+    await createContentForOwner(42, {
+      ...contentInput,
+      status: "published",
+    } as never);
+
+    expect(state.insertValues).toMatchObject({ status: "draft" });
+  });
+
+  it.each(["published", "scheduled", "failed"])(
+    "rejects a direct database update to %s",
+    async status => {
+      state.selectedContent = contentForCompany(17);
+
+      await expect(
+        updateContentForOwner(42, 150001, { status } as never)
+      ).rejects.toThrow("transição controlada");
+      expect(state.updateCalls).toBe(0);
+    }
+  );
 
   it("rejects transferring content to a company that does not exist or belong to the owner", async () => {
     state.selectedContent = contentForCompany(17);
