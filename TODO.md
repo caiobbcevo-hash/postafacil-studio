@@ -141,11 +141,9 @@ O PR #1 foi integrado em `3bc84cee93953388108c2567ee7f3cf075b4f8aa`. Aguardar a 
 - `git diff --check`: passou.
 
 ## Estado após o PR #3
-
 - [x] Resolver os conflitos entre `test/reliability-contracts` e a `main` atualizada sem perder as alterações dos PRs anteriores.
 - [x] Confirmar novamente `pnpm check`, `pnpm test`, `pnpm build` e `git diff --check` antes da integração.
 - [x] Integrar o PR #3 na `main` no merge commit `16baa950c5274b58c8d2ff41804b336616d95f08`.
 
 ## Próxima tarefa recomendada
-
 Repetir a validação visual autenticada no Preview, cobrindo seleção de empresa, abertura do rascunho `150001`, edição, salvamento e reabertura. Se for necessário automatizar esse fluxo, primeiro preparar um ambiente de teste isolado e uma sessão segura; não usar o MySQL compartilhado para testes destrutivos, não repetir migrações e não consumir créditos de IA sem autorização explícita.
