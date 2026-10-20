@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import type { InsertUser } from "../drizzle/schema";
 import { companies, contents, users } from "../drizzle/schema";
@@ -192,7 +192,11 @@ export async function updateContentForOwner(ownerId: number, contentId: number, 
     const company = await getCompanyForOwner(ownerId, input.companyId);
     if (!company) throw new Error("Company not found");
   }
-  await db.update(contents).set(input).where(eq(contents.id, contentId));
+  const ownedCompanyIds = sql`(select ${companies.id} from ${companies} where ${eq(companies.ownerId, ownerId)})`;
+  await db
+    .update(contents)
+    .set(input)
+    .where(and(eq(contents.id, contentId), inArray(contents.companyId, ownedCompanyIds)));
   const updated = await getContentForOwner(ownerId, contentId);
   if (!updated) throw new Error("Content was not found after update");
   return updated;
@@ -202,5 +206,9 @@ export async function deleteContentForOwner(ownerId: number, contentId: number):
   const db = await requireDb();
   const existing = await getContentForOwner(ownerId, contentId);
   if (!existing) throw new Error("Content not found");
-  await db.delete(contents).where(eq(contents.id, contentId));
+  const ownedCompanyIds = sql`(select ${companies.id} from ${companies} where ${eq(companies.ownerId, ownerId)})`;
+  const result = await db
+    .delete(contents)
+    .where(and(eq(contents.id, contentId), inArray(contents.companyId, ownedCompanyIds)));
+  if (result[0].affectedRows === 0) throw new Error("Content not found");
 }
