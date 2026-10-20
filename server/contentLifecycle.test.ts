@@ -45,6 +45,30 @@ describe("content lifecycle policy", () => {
     ).toBe("failed");
   });
 
+  it("allows the owner editorial actions represented by the existing policy", () => {
+    expect(
+      assertContentTransition({ from: "draft", to: "pending_approval", actor: "editor" })
+    ).toBe("pending_approval");
+    expect(
+      assertContentTransition({ from: "pending_approval", to: "approved", actor: "approver" })
+    ).toBe("approved");
+    expect(
+      assertContentTransition({ from: "pending_approval", to: "draft", actor: "editor" })
+    ).toBe("draft");
+    expect(
+      assertContentTransition({ from: "approved", to: "draft", actor: "editor" })
+    ).toBe("draft");
+  });
+
+  it("rejects invalid editorial transition directions", () => {
+    expect(() =>
+      assertContentTransition({ from: "draft", to: "approved", actor: "approver" })
+    ).toThrow(ContentLifecycleError);
+    expect(() =>
+      assertContentTransition({ from: "approved", to: "pending_approval", actor: "editor" })
+    ).toThrow(ContentLifecycleError);
+  });
+
   it("rejects invalid transitions and keeps published terminal", () => {
     expect(
       isContentTransitionAllowed({

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import { ContentNotFoundError } from "./contentLifecycle";
 
 const dbMocks = vi.hoisted(() => ({
   listCompaniesForOwner: vi.fn(),
@@ -12,6 +13,7 @@ const dbMocks = vi.hoisted(() => ({
   getContentForOwner: vi.fn(),
   createContentForOwner: vi.fn(),
   updateContentForOwner: vi.fn(),
+  transitionContentForOwner: vi.fn(),
   deleteContentForOwner: vi.fn(),
 }));
 
@@ -79,6 +81,7 @@ describe("authenticated ownership contracts", () => {
     dbMocks.updateCompanyForOwner.mockResolvedValue({ id: 17, ...companyInput });
     dbMocks.createContentForOwner.mockResolvedValue({ id: 150001, ...contentInput, companyName: companyInput.name });
     dbMocks.updateContentForOwner.mockResolvedValue({ id: 150001, ...contentInput, companyName: companyInput.name });
+    dbMocks.transitionContentForOwner.mockResolvedValue({ id: 150001, ...contentInput, status: "pending_approval", companyName: companyInput.name });
   });
 
   it("rejects company and content reads without an authenticated user", async () => {
@@ -132,6 +135,60 @@ describe("authenticated ownership contracts", () => {
       expect(dbMocks.updateContentForOwner).not.toHaveBeenCalled();
     }
   );
+
+  it.each(["requestReview", "approve", "returnForRevision"] as const)(
+    "requires authentication for %s",
+    async operation => {
+      const caller = appRouter.createCaller(createContext());
+
+      await expect(caller.contents[operation]({ id: 150001 })).rejects.toMatchObject({
+        code: "UNAUTHORIZED",
+      });
+      expect(dbMocks.transitionContentForOwner).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([
+    { operation: "requestReview" as const, status: "pending_approval", actor: "editor" },
+    { operation: "approve" as const, status: "approved", actor: "approver" },
+    { operation: "returnForRevision" as const, status: "draft", actor: "editor" },
+  ])("derives owner and policy actor on the server for $operation", async ({ operation, status, actor }) => {
+    const caller = appRouter.createCaller(createContext(createUser(42)));
+
+    await caller.contents[operation]({ id: 150001 });
+
+    expect(dbMocks.transitionContentForOwner).toHaveBeenCalledWith(42, 150001, status, actor);
+  });
+
+  it("rejects client-supplied owner and actor fields", async () => {
+    const caller = appRouter.createCaller(createContext(createUser(42)));
+
+    await expect(
+      caller.contents.approve({ id: 150001, ownerId: 84, actor: "editor" } as never)
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(dbMocks.transitionContentForOwner).not.toHaveBeenCalled();
+  });
+
+  it("does not allow another account to transition the content", async () => {
+    const caller = appRouter.createCaller(createContext(createUser(84)));
+    dbMocks.transitionContentForOwner.mockRejectedValueOnce(new ContentNotFoundError());
+
+    await expect(caller.contents.approve({ id: 150001 })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    expect(dbMocks.transitionContentForOwner).toHaveBeenCalledWith(
+      84,
+      150001,
+      "approved",
+      "approver"
+    );
+    expect(dbMocks.transitionContentForOwner).not.toHaveBeenCalledWith(
+      42,
+      150001,
+      "approved",
+      "approver"
+    );
+  });
 
   it("does not substitute another user's identity when the same record is requested", async () => {
     const caller = appRouter.createCaller(createContext(createUser(84)));

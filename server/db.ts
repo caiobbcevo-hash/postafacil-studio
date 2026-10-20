@@ -4,7 +4,12 @@ import type { InsertUser } from "../drizzle/schema";
 import { companies, contents, users } from "../drizzle/schema";
 import type { Company, Content } from "../drizzle/schema";
 import { ENV } from "./_core/env";
-import { assertCrudStatusIsNotChanged } from "./contentLifecycle";
+import {
+  assertContentTransition,
+  assertCrudStatusIsNotChanged,
+  ContentNotFoundError,
+  ContentTransitionConflictError,
+} from "./contentLifecycle";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -200,6 +205,36 @@ export async function updateContentForOwner(ownerId: number, contentId: number, 
     .where(and(eq(contents.id, contentId), inArray(contents.companyId, ownedCompanyIds)));
   const updated = await getContentForOwner(ownerId, contentId);
   if (!updated) throw new Error("Content was not found after update");
+  return updated;
+}
+
+export async function transitionContentForOwner(
+  ownerId: number,
+  contentId: number,
+  to: Content["status"],
+  actor: "editor" | "approver"
+): Promise<ContentWithCompany> {
+  const db = await requireDb();
+  const existing = await getContentForOwner(ownerId, contentId);
+  if (!existing) throw new ContentNotFoundError();
+
+  const status = assertContentTransition({ from: existing.status, to, actor });
+  const ownedCompanyIds = sql`(select ${companies.id} from ${companies} where ${eq(companies.ownerId, ownerId)})`;
+  const result = await db
+    .update(contents)
+    .set({ status })
+    .where(
+      and(
+        eq(contents.id, contentId),
+        eq(contents.status, existing.status),
+        inArray(contents.companyId, ownedCompanyIds)
+      )
+    );
+
+  if (result[0].affectedRows === 0) throw new ContentTransitionConflictError();
+
+  const updated = await getContentForOwner(ownerId, contentId);
+  if (!updated) throw new ContentNotFoundError();
   return updated;
 }
 
